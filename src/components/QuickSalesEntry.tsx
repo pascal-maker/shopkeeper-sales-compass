@@ -1,5 +1,4 @@
-
-import { Plus, ShoppingCart } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -16,8 +15,7 @@ export const QuickSalesEntry = () => {
     <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg font-semibold">
             Sale
           </CardTitle>
         </div>
