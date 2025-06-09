@@ -6,27 +6,41 @@ import { InventorySnapshot } from "@/components/InventorySnapshot";
 import { DailyReportSummary } from "@/components/DailyReportSummary";
 import { SyncStatusWidget } from "@/components/SyncStatusWidget";
 import { NavigationTabs } from "@/components/NavigationTabs";
+import { SalesHistory } from "@/components/SalesHistory";
 
 const Index = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
 
+  const renderCurrentView = () => {
+    switch (currentTab) {
+      case "sales":
+        return <SalesHistory onBack={() => setCurrentTab("dashboard")} />;
+      case "dashboard":
+      default:
+        return (
+          <>
+            <DashboardHeader />
+            <main className="pb-20 px-4 pt-4 space-y-6">
+              {/* Quick Sales Entry */}
+              <QuickSalesEntry />
+              
+              {/* Two-column layout for Inventory and Daily Report */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InventorySnapshot />
+                <DailyReportSummary />
+              </div>
+              
+              {/* Sync Status */}
+              <SyncStatusWidget />
+            </main>
+          </>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      
-      <main className="pb-20 px-4 pt-4 space-y-6">
-        {/* Quick Sales Entry */}
-        <QuickSalesEntry />
-        
-        {/* Two-column layout for Inventory and Daily Report */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InventorySnapshot />
-          <DailyReportSummary />
-        </div>
-        
-        {/* Sync Status */}
-        <SyncStatusWidget />
-      </main>
+      {renderCurrentView()}
       
       {/* Bottom Navigation */}
       <NavigationTabs currentTab={currentTab} onTabChange={setCurrentTab} />

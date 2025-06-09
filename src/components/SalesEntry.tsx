@@ -100,6 +100,9 @@ export const SalesEntry = () => {
     existingSales.push({ ...sale, id: Date.now(), synced: false });
     localStorage.setItem('sales', JSON.stringify(existingSales));
     
+    // Dispatch custom event to notify other components of new sale
+    window.dispatchEvent(new Event('storage'));
+    
     // Update inventory (simulated)
     console.log('Updating inventory for items:', cart);
     
