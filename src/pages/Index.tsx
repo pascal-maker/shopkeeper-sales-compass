@@ -7,6 +7,7 @@ import { DailyReportSummary } from "@/components/DailyReportSummary";
 import { SyncStatusWidget } from "@/components/SyncStatusWidget";
 import { NavigationTabs } from "@/components/NavigationTabs";
 import { SalesHistory } from "@/components/SalesHistory";
+import { ProductsManager } from "@/components/ProductsManager";
 
 const Index = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
@@ -15,6 +16,8 @@ const Index = () => {
     switch (currentTab) {
       case "sales":
         return <SalesHistory onBack={() => setCurrentTab("dashboard")} />;
+      case "products":
+        return <ProductsManager />;
       case "dashboard":
       default:
         return (
