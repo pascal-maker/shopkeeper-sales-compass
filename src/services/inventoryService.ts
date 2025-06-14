@@ -1,5 +1,4 @@
-
-import { useToast } from "@/hooks/use-toast";
+import { CartItem } from "@/types/sales";
 
 export interface Product {
   id: string;
@@ -13,13 +12,6 @@ export interface Product {
   expiryDate?: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface CartItem {
-  id: string; // Changed from number to string
-  name: string;
-  price: number;
-  quantity: number;
 }
 
 export const updateInventoryAfterSale = (cartItems: CartItem[]): { success: boolean; errors: string[] } => {

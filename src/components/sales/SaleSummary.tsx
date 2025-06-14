@@ -1,9 +1,8 @@
-
 import { CheckCircle, Plus, Share, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sale } from "../SalesEntry";
+import { Sale } from "@/types/sales";
 
 interface SaleSummaryProps {
   sale: Sale;
