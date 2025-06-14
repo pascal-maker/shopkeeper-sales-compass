@@ -22,6 +22,11 @@ export const SaleConfirmation = ({
   onConfirm,
   onBack
 }: SaleConfirmationProps) => {
+  console.log('SaleConfirmation - Payment Type:', paymentType);
+  console.log('SaleConfirmation - Customer:', customer);
+  console.log('SaleConfirmation - Cart:', cart);
+  console.log('SaleConfirmation - Total Amount:', totalAmount);
+
   const getPaymentIcon = () => {
     switch (paymentType) {
       case 'cash':
@@ -42,6 +47,12 @@ export const SaleConfirmation = ({
       case 'credit':
         return 'Credit Sale';
     }
+  };
+
+  const handleConfirmClick = () => {
+    console.log('Confirm button clicked - Payment Type:', paymentType);
+    console.log('Confirm button clicked - Customer:', customer);
+    onConfirm();
   };
 
   return (
@@ -126,15 +137,22 @@ export const SaleConfirmation = ({
         </Card>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - This section should ALWAYS render */}
       <div className="flex gap-3">
         <Button variant="outline" onClick={onBack} className="flex-1">
           Back
         </Button>
-        <Button onClick={onConfirm} className="flex-1 h-12" size="lg">
+        <Button onClick={handleConfirmClick} className="flex-1 h-12" size="lg">
           Complete Sale
         </Button>
       </div>
+      
+      {/* Debug info for credit sales */}
+      {paymentType === 'credit' && (
+        <div className="text-xs text-muted-foreground p-2 bg-gray-100 rounded">
+          Debug: Payment Type = {paymentType}, Customer = {customer ? customer.name : 'No customer'}
+        </div>
+      )}
     </div>
   );
 };
