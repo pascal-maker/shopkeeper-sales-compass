@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sale, CartItem } from "@/types/sales";
 import { Customer } from "@/types/customer";
 
+// Helper function to check if a string is a valid UUID
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export const salesService = {
   async saveSale(sale: Sale): Promise<{ saleId: string; success: boolean; error?: string }> {
     try {
@@ -35,15 +41,39 @@ export const salesService = {
 
       console.log('SalesService: Sale saved successfully:', saleData);
 
-      // Save sale items
-      const saleItems = sale.items.map(item => ({
-        sale_id: saleData.id,
-        product_id: item.id,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.quantity * item.price,
-        sync_status: 'synced' as const
-      }));
+      // Handle sale items - need to map localStorage product IDs to database UUIDs
+      const saleItemsPromises = sale.items.map(async (item) => {
+        let productId = item.id;
+        
+        // If the product ID is not a valid UUID, look up the product by name
+        if (!isValidUUID(item.id)) {
+          console.log('SalesService: Looking up product by name:', item.name);
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('id')
+            .eq('name', item.name)
+            .single();
+          
+          if (productError || !productData) {
+            console.error('SalesService: Could not find product by name:', item.name, productError);
+            throw new Error(`Product "${item.name}" not found in database`);
+          }
+          
+          productId = productData.id;
+          console.log('SalesService: Mapped product name to UUID:', item.name, '->', productId);
+        }
+
+        return {
+          sale_id: saleData.id,
+          product_id: productId,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.quantity * item.price,
+          sync_status: 'synced' as const
+        };
+      });
+
+      const saleItems = await Promise.all(saleItemsPromises);
 
       const { error: itemsError } = await supabase
         .from('sale_items')
@@ -83,7 +113,7 @@ export const salesService = {
       return { saleId: saleData.id, success: true };
     } catch (error) {
       console.error('SalesService: Unexpected error:', error);
-      return { saleId: '', success: false, error: 'Unexpected error occurred' };
+      return { saleId: '', success: false, error: error instanceof Error ? error.message : 'Unexpected error occurred' };
     }
   }
 };
