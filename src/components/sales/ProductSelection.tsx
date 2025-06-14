@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,15 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { CartItem } from "../SalesEntry";
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
-  price: number;
-  stock: number;
+  sellingPrice: number;
+  quantity: number;
+  unitType?: string;
+  category?: string;
 }
 
 interface ProductSelectionProps {
   cart: CartItem[];
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: { id: number; name: string; price: number }) => void;
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemoveFromCart: (productId: number) => void;
   totalAmount: number;
@@ -32,26 +34,76 @@ export const ProductSelection = ({
   onProceedToPayment
 }: ProductSelectionProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
 
-  const products: Product[] = [
-    { id: 1, name: "Coca Cola 500ml", price: 25, stock: 48 },
-    { id: 2, name: "Bread", price: 15, stock: 12 },
-    { id: 3, name: "Milk 1L", price: 45, stock: 8 },
-    { id: 4, name: "Rice 1kg", price: 85, stock: 25 },
-    { id: 5, name: "Sugar 1kg", price: 65, stock: 15 },
-    { id: 6, name: "Cooking Oil 500ml", price: 120, stock: 20 },
-    { id: 7, name: "Eggs (dozen)", price: 180, stock: 6 },
-    { id: 8, name: "Soap Bar", price: 35, stock: 30 }
-  ];
+  // Load products from localStorage on component mount
+  useEffect(() => {
+    const loadProducts = () => {
+      try {
+        const storedProducts = localStorage.getItem('products');
+        if (storedProducts) {
+          const parsedProducts = JSON.parse(storedProducts);
+          setProducts(parsedProducts);
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    };
+
+    loadProducts();
+
+    // Listen for storage events to update products when they change
+    const handleStorageChange = () => {
+      loadProducts();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getCartQuantity = (productId: number) => {
-    const cartItem = cart.find(item => item.id === productId);
+  const getCartQuantity = (productId: string) => {
+    const cartItem = cart.find(item => item.id === parseInt(productId));
     return cartItem ? cartItem.quantity : 0;
   };
+
+  const handleAddToCart = (product: Product) => {
+    onAddToCart({
+      id: parseInt(product.id),
+      name: product.name,
+      price: product.sellingPrice
+    });
+  };
+
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    onUpdateQuantity(parseInt(productId), newQuantity);
+  };
+
+  if (products.length === 0) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Select Products</h1>
+        </div>
+        
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-medium mb-2">No products available</h3>
+            <p className="text-muted-foreground mb-4">
+              Add products to your inventory first before recording sales
+            </p>
+            <Button onClick={() => window.dispatchEvent(new CustomEvent('switchToProducts'))}>
+              Go to Products
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -84,9 +136,16 @@ export const ProductSelection = ({
                   <div>
                     <h3 className="font-semibold text-lg">{product.name}</h3>
                     <div className="flex justify-between items-center">
-                      <span className="text-primary font-bold text-xl">${product.price}</span>
-                      <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
+                      <span className="text-primary font-bold text-xl">${product.sellingPrice}</span>
+                      <span className="text-sm text-muted-foreground">
+                        Stock: {product.quantity} {product.unitType || 'pcs'}
+                      </span>
                     </div>
+                    {product.category && (
+                      <Badge variant="outline" className="text-xs mt-1">
+                        {product.category}
+                      </Badge>
+                    )}
                   </div>
 
                   {cartQuantity > 0 ? (
@@ -95,7 +154,7 @@ export const ProductSelection = ({
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => onUpdateQuantity(product.id, cartQuantity - 1)}
+                        onClick={() => handleUpdateQuantity(product.id, cartQuantity - 1)}
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
@@ -104,8 +163,8 @@ export const ProductSelection = ({
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => onUpdateQuantity(product.id, cartQuantity + 1)}
-                        disabled={cartQuantity >= product.stock}
+                        onClick={() => handleUpdateQuantity(product.id, cartQuantity + 1)}
+                        disabled={cartQuantity >= product.quantity}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -113,8 +172,8 @@ export const ProductSelection = ({
                   ) : (
                     <Button
                       className="w-full h-10"
-                      onClick={() => onAddToCart(product)}
-                      disabled={product.stock === 0}
+                      onClick={() => handleAddToCart(product)}
+                      disabled={product.quantity === 0}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add to Cart
