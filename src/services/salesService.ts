@@ -8,15 +8,22 @@ export const salesService = {
     try {
       console.log('SalesService: Saving sale to Supabase:', sale);
       
+      // Convert payment type to match database enum
+      const paymentTypeMap = {
+        'mobile-money': 'mobile_money' as const,
+        'cash': 'cash' as const,
+        'credit': 'credit' as const
+      };
+      
       // First, save the sale
       const { data: saleData, error: saleError } = await supabase
         .from('sales')
         .insert({
           total_amount: sale.total,
-          payment_type: sale.paymentType,
+          payment_type: paymentTypeMap[sale.paymentType],
           customer_id: sale.customer?.id || null,
           sale_date: sale.timestamp.toISOString(),
-          sync_status: 'synced'
+          sync_status: 'synced' as const
         })
         .select()
         .single();
@@ -35,7 +42,7 @@ export const salesService = {
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.quantity * item.price,
-        sync_status: 'synced'
+        sync_status: 'synced' as const
       }));
 
       const { error: itemsError } = await supabase
@@ -58,11 +65,11 @@ export const salesService = {
           .insert({
             customer_id: sale.customer.id,
             sale_id: saleData.id,
-            transaction_type: 'sale',
+            transaction_type: 'sale' as const,
             amount: sale.total,
             transaction_date: sale.timestamp.toISOString(),
             notes: `Credit sale - ${sale.items.length} items`,
-            sync_status: 'synced'
+            sync_status: 'synced' as const
           });
 
         if (creditError) {
