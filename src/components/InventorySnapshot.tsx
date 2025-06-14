@@ -1,18 +1,93 @@
 
+import { useState, useEffect } from "react";
 import { Package, AlertTriangle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const InventorySnapshot = () => {
-  const lowStockItems = [
-    { name: "Milk 1L", stock: 3, minStock: 10 },
-    { name: "Bread", stock: 2, minStock: 5 },
-    { name: "Eggs (dozen)", stock: 1, minStock: 8 }
-  ];
+interface Product {
+  id: string;
+  name: string;
+  quantity: number;
+  sellingPrice: number;
+  costPrice?: number;
+  unitType?: string;
+  category?: string;
+  sku?: string;
+  expiryDate?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-  const totalProducts = 156;
+export const InventorySnapshot = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load products from localStorage
+  const loadProducts = () => {
+    try {
+      const storedProducts = localStorage.getItem('products');
+      if (storedProducts) {
+        const parsedProducts = JSON.parse(storedProducts).map((product: any) => ({
+          ...product,
+          createdAt: new Date(product.createdAt),
+          updatedAt: new Date(product.updatedAt)
+        }));
+        setProducts(parsedProducts);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+
+    // Listen for storage changes to update when products are modified
+    const handleStorageChange = () => {
+      loadProducts();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event listener for when products are updated within the same tab
+    const handleProductsUpdate = () => {
+      loadProducts();
+    };
+    
+    window.addEventListener('productsUpdated', handleProductsUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('productsUpdated', handleProductsUpdate);
+    };
+  }, []);
+
+  // Calculate metrics
+  const totalProducts = products.length;
+  const lowStockItems = products.filter(product => product.quantity < 5);
   const lowStockCount = lowStockItems.length;
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-600" />
+            Inventory
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center text-muted-foreground">Loading...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -41,19 +116,36 @@ export const InventorySnapshot = () => {
               <AlertTriangle className="h-4 w-4 text-destructive" />
               <span className="text-sm font-medium">Needs Restocking</span>
             </div>
-            {lowStockItems.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 bg-destructive/5 rounded border-l-2 border-destructive">
+            {lowStockItems.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex justify-between items-center p-2 bg-destructive/5 rounded border-l-2 border-destructive">
                 <span className="text-sm font-medium">{item.name}</span>
                 <Badge variant="destructive" className="text-xs">
-                  {item.stock} left
+                  {item.quantity} {item.unitType || 'pcs'} left
                 </Badge>
               </div>
             ))}
+            {lowStockItems.length > 5 && (
+              <div className="text-xs text-muted-foreground text-center">
+                +{lowStockItems.length - 5} more items need restocking
+              </div>
+            )}
+          </div>
+        )}
+
+        {totalProducts === 0 && (
+          <div className="text-center py-4">
+            <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No products in inventory</p>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="h-10">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-10"
+            onClick={() => window.dispatchEvent(new CustomEvent('openAddProduct'))}
+          >
             <Plus className="h-4 w-4 mr-1" />
             Add Product
           </Button>
