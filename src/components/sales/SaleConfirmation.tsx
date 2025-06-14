@@ -2,7 +2,8 @@
 import { ArrowLeft, Banknote, Smartphone, CreditCard, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CartItem, Customer } from "../SalesEntry";
+import { CartItem } from "../SalesEntry";
+import { Customer } from "@/types/customer";
 
 interface SaleConfirmationProps {
   cart: CartItem[];
