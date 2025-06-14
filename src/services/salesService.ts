@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, CartItem } from "@/types/sales";
 import { Customer } from "@/types/customer";
+import { productSyncService, LocalProduct } from "./productSyncService";
 
 // Helper function to check if a string is a valid UUID
 const isValidUUID = (str: string): boolean => {
@@ -20,6 +21,31 @@ export const salesService = {
         'cash': 'cash' as const,
         'credit': 'credit' as const
       };
+      
+      // Before saving the sale, ensure all products exist in Supabase
+      console.log('SalesService: Ensuring products exist in Supabase before saving sale...');
+      
+      // Get localStorage products to sync any missing ones
+      const storedProducts = localStorage.getItem('products');
+      if (storedProducts) {
+        const localProducts: LocalProduct[] = JSON.parse(storedProducts).map((product: any) => ({
+          ...product,
+          createdAt: new Date(product.createdAt),
+          updatedAt: new Date(product.updatedAt)
+        }));
+
+        // Find products that are in our sale items
+        const saleProductIds = sale.items.map(item => item.id);
+        const relevantProducts = localProducts.filter(product => saleProductIds.includes(product.id));
+        
+        if (relevantProducts.length > 0) {
+          const syncResult = await productSyncService.ensureProductsExistInSupabase(relevantProducts);
+          if (!syncResult.success) {
+            console.error('SalesService: Failed to sync products:', syncResult.errors);
+            return { saleId: '', success: false, error: `Product sync failed: ${syncResult.errors.join(', ')}` };
+          }
+        }
+      }
       
       // First, save the sale
       const { data: saleData, error: saleError } = await supabase
@@ -52,11 +78,16 @@ export const salesService = {
             .from('products')
             .select('id')
             .eq('name', item.name)
-            .single();
+            .maybeSingle();
           
-          if (productError || !productData) {
-            console.error('SalesService: Could not find product by name:', item.name, productError);
-            throw new Error(`Product "${item.name}" not found in database`);
+          if (productError) {
+            console.error('SalesService: Error looking up product by name:', item.name, productError);
+            throw new Error(`Error looking up product "${item.name}": ${productError.message}`);
+          }
+          
+          if (!productData) {
+            console.error('SalesService: Product not found by name:', item.name);
+            throw new Error(`Product "${item.name}" not found in database. Please ensure the product is properly synced.`);
           }
           
           productId = productData.id;
