@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ProductSelection } from "./sales/ProductSelection";
 import { PaymentSelection } from "./sales/PaymentSelection";
@@ -6,6 +5,8 @@ import { CustomerSelection } from "./sales/CustomerSelection";
 import { SaleConfirmation } from "./sales/SaleConfirmation";
 import { SaleSummary } from "./sales/SaleSummary";
 import { Customer } from "@/types/customer";
+import { updateInventoryAfterSale } from "@/services/inventoryService";
+import { useToast } from "@/hooks/use-toast";
 
 export interface CartItem {
   id: number;
@@ -30,6 +31,7 @@ export const SalesEntry = () => {
   const [paymentType, setPaymentType] = useState<'cash' | 'mobile-money' | 'credit'>('cash');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>();
   const [completedSale, setCompletedSale] = useState<Sale | undefined>();
+  const { toast } = useToast();
 
   const addToCart = (product: { id: number; name: string; price: number }) => {
     setCart(prevCart => {
@@ -82,6 +84,23 @@ export const SalesEntry = () => {
   };
 
   const handleConfirmSale = () => {
+    console.log('Confirming sale, updating inventory...');
+    
+    // Update inventory before saving the sale
+    const inventoryResult = updateInventoryAfterSale(cart);
+    
+    if (!inventoryResult.success) {
+      // Show error toast and don't proceed with sale
+      toast({
+        title: "Inventory Error",
+        description: inventoryResult.errors.join(', '),
+        variant: "destructive"
+      });
+      console.error('Inventory update failed:', inventoryResult.errors);
+      return;
+    }
+
+    // If inventory update successful, proceed with sale
     const sale: Sale = {
       items: cart,
       total: getTotalAmount(),
@@ -98,8 +117,13 @@ export const SalesEntry = () => {
     // Dispatch custom event to notify other components of new sale
     window.dispatchEvent(new Event('storage'));
     
-    // Update inventory (simulated)
-    console.log('Updating inventory for items:', cart);
+    console.log('Sale completed successfully. Inventory updated.');
+    
+    // Show success toast
+    toast({
+      title: "Sale Completed",
+      description: `Sale of $${getTotalAmount()} completed successfully. Inventory updated.`,
+    });
     
     setCompletedSale(sale);
     setCurrentStep('summary');
