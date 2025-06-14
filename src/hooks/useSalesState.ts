@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sale, CartItem, SalesStep } from "@/types/sales";
 import { Customer } from "@/types/customer";
 import { updateInventoryAfterSale } from "@/services/inventoryService";
+import { salesService } from "@/services/salesService";
 import { useToast } from "@/hooks/use-toast";
 
 export const useSalesState = () => {
@@ -64,7 +65,7 @@ export const useSalesState = () => {
     setCurrentStep('confirm');
   };
 
-  const handleConfirmSale = () => {
+  const handleConfirmSale = async () => {
     console.log('Confirming sale, updating inventory...');
     console.log('Cart items for inventory update:', cart);
     
@@ -91,20 +92,39 @@ export const useSalesState = () => {
       timestamp: new Date()
     };
     
-    // Save sale to local storage (simulating offline database)
+    // Save sale to Supabase database
+    console.log('Saving sale to database...');
+    const saveResult = await salesService.saveSale(sale);
+    
+    if (!saveResult.success) {
+      // Show error toast
+      toast({
+        title: "Sale Error",
+        description: saveResult.error || "Failed to save sale to database",
+        variant: "destructive"
+      });
+      console.error('Sale save failed:', saveResult.error);
+      return;
+    }
+
+    // Also save to localStorage for offline functionality
     const existingSales = JSON.parse(localStorage.getItem('sales') || '[]');
-    existingSales.push({ ...sale, id: Date.now(), synced: false });
+    existingSales.push({ ...sale, id: Date.now(), synced: true });
     localStorage.setItem('sales', JSON.stringify(existingSales));
     
     // Dispatch custom event to notify other components of new sale
     window.dispatchEvent(new Event('storage'));
     
-    console.log('Sale completed successfully. Inventory updated.');
+    console.log('Sale completed successfully. Inventory updated and sale saved to database.');
     
     // Show success toast
+    const successMessage = paymentType === 'credit' 
+      ? `Credit sale of $${getTotalAmount()} completed for ${selectedCustomer?.name}. Customer credit updated.`
+      : `Sale of $${getTotalAmount()} completed successfully. Inventory updated.`;
+    
     toast({
       title: "Sale Completed",
-      description: `Sale of $${getTotalAmount()} completed successfully. Inventory updated.`,
+      description: successMessage,
     });
     
     setCompletedSale(sale);
