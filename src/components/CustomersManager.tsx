@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,134 +8,128 @@ import { AddCustomerForm } from "./customers/AddCustomerForm";
 import { CustomerDetail } from "./customers/CustomerDetail";
 import { Customer, CreditTransaction, CustomerWithCredit } from "@/types/customer";
 import { useToast } from "@/hooks/use-toast";
+import { customerService } from "@/services/customerService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type View = 'list' | 'add' | 'detail' | 'edit';
 
 export const CustomersManager = () => {
   const [currentView, setCurrentView] = useState<View>('list');
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    console.log('CustomersManager: Loading data from localStorage');
-    
-    const savedCustomers = localStorage.getItem('customers');
-    const savedTransactions = localStorage.getItem('creditTransactions');
-    
-    if (savedCustomers) {
-      try {
-        const parsedCustomers = JSON.parse(savedCustomers);
-        // Convert date strings back to Date objects
-        const customersWithDates = parsedCustomers.map((customer: any) => ({
-          ...customer,
-          createdAt: new Date(customer.createdAt),
-          updatedAt: new Date(customer.updatedAt)
-        }));
-        console.log('CustomersManager: Loaded customers:', customersWithDates);
-        setCustomers(customersWithDates);
-      } catch (error) {
-        console.error('Error parsing customers from localStorage:', error);
-      }
-    }
-    
-    if (savedTransactions) {
-      try {
-        const parsedTransactions = JSON.parse(savedTransactions);
-        // Convert date strings back to Date objects
-        const transactionsWithDates = parsedTransactions.map((transaction: any) => ({
-          ...transaction,
-          date: new Date(transaction.date)
-        }));
-        console.log('CustomersManager: Loaded transactions:', transactionsWithDates);
-        setCreditTransactions(transactionsWithDates);
-      } catch (error) {
-        console.error('Error parsing transactions from localStorage:', error);
-      }
-    }
-  }, []);
+  // Query for customers
+  const { data: customers = [], isLoading: customersLoading, error: customersError } = useQuery({
+    queryKey: ['customers'],
+    queryFn: customerService.getCustomers,
+  });
 
-  // Save customers to localStorage whenever customers change
-  useEffect(() => {
-    if (customers.length > 0) {
-      console.log('CustomersManager: Saving customers to localStorage:', customers);
-      localStorage.setItem('customers', JSON.stringify(customers));
-    }
-  }, [customers]);
+  // Query for credit transactions
+  const { data: creditTransactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ['creditTransactions'],
+    queryFn: customerService.getCreditTransactions,
+  });
 
-  // Save credit transactions to localStorage whenever they change
-  useEffect(() => {
-    if (creditTransactions.length > 0) {
-      console.log('CustomersManager: Saving transactions to localStorage:', creditTransactions);
-      localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions));
+  // Mutation for adding customer
+  const addCustomerMutation = useMutation({
+    mutationFn: customerService.addCustomer,
+    onSuccess: (newCustomer) => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast({
+        title: "Customer Added",
+        description: `${newCustomer.name} has been added successfully.`,
+      });
+      setCurrentView('list');
+    },
+    onError: (error) => {
+      console.error('Error adding customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add customer. Please try again.",
+        variant: "destructive",
+      });
     }
-  }, [creditTransactions]);
+  });
+
+  // Mutation for updating customer
+  const updateCustomerMutation = useMutation({
+    mutationFn: ({ customerId, updates }: { customerId: string; updates: Partial<Customer> }) =>
+      customerService.updateCustomer(customerId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      toast({
+        title: "Customer Updated",
+        description: "Customer information has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update customer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for deleting customer
+  const deleteCustomerMutation = useMutation({
+    mutationFn: customerService.deleteCustomer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['creditTransactions'] });
+      toast({
+        title: "Customer Deleted",
+        description: "Customer and all associated transactions have been removed.",
+      });
+      setCurrentView('list');
+    },
+    onError: (error) => {
+      console.error('Error deleting customer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete customer. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for adding credit transaction
+  const addCreditTransactionMutation = useMutation({
+    mutationFn: customerService.addCreditTransaction,
+    onSuccess: (transaction) => {
+      queryClient.invalidateQueries({ queryKey: ['creditTransactions'] });
+      toast({
+        title: transaction.type === 'sale' ? "Credit Sale Recorded" : "Payment Recorded",
+        description: `Transaction of $${transaction.amount} has been recorded.`,
+      });
+    },
+    onError: (error) => {
+      console.error('Error adding credit transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const addCustomer = (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) => {
-    const newCustomer: Customer = {
-      ...customerData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      synced: false
-    };
-
-    console.log('CustomersManager: Adding new customer:', newCustomer);
-    setCustomers(prev => {
-      const updated = [...prev, newCustomer];
-      console.log('CustomersManager: Updated customers list:', updated);
-      return updated;
-    });
-    
-    toast({
-      title: "Customer Added",
-      description: `${customerData.name} has been added successfully.`,
-    });
-    
-    setCurrentView('list');
+    addCustomerMutation.mutate(customerData);
   };
 
   const updateCustomer = (customerId: string, updates: Partial<Customer>) => {
-    setCustomers(prev => prev.map(customer => 
-      customer.id === customerId 
-        ? { ...customer, ...updates, updatedAt: new Date(), synced: false }
-        : customer
-    ));
-    
-    toast({
-      title: "Customer Updated",
-      description: "Customer information has been updated successfully.",
-    });
+    updateCustomerMutation.mutate({ customerId, updates });
   };
 
   const deleteCustomer = (customerId: string) => {
-    setCustomers(prev => prev.filter(customer => customer.id !== customerId));
-    setCreditTransactions(prev => prev.filter(transaction => transaction.customerId !== customerId));
-    
-    toast({
-      title: "Customer Deleted",
-      description: "Customer and all associated transactions have been removed.",
-    });
-    
-    setCurrentView('list');
+    deleteCustomerMutation.mutate(customerId);
   };
 
   const addCreditTransaction = (transaction: Omit<CreditTransaction, 'id' | 'synced'>) => {
-    const newTransaction: CreditTransaction = {
-      ...transaction,
-      id: Date.now().toString(),
-      synced: false
-    };
-
-    setCreditTransactions(prev => [...prev, newTransaction]);
-    
-    toast({
-      title: transaction.type === 'sale' ? "Credit Sale Recorded" : "Payment Recorded",
-      description: `Transaction of $${transaction.amount} has been recorded.`,
-    });
+    addCreditTransactionMutation.mutate(transaction);
   };
 
   const getCustomerCredit = (customerId: string): number => {
@@ -172,6 +167,32 @@ export const CustomersManager = () => {
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone.includes(searchTerm)
   );
+
+  // Show loading state
+  if (customersLoading || transactionsLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-muted-foreground">Loading customers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (customersError) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading customers</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['customers'] })}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -227,9 +248,10 @@ export const CustomersManager = () => {
                 onClick={() => setCurrentView('add')}
                 className="w-full"
                 size="lg"
+                disabled={addCustomerMutation.isPending}
               >
                 <Plus className="h-5 w-5 mr-2" />
-                Add Customer
+                {addCustomerMutation.isPending ? "Adding..." : "Add Customer"}
               </Button>
             </div>
 

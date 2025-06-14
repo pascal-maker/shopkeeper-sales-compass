@@ -4,18 +4,35 @@ import { Cloud, CloudOff, RefreshCw, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export const SyncStatusWidget = () => {
-  const [isOnline, setIsOnline] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState("2 minutes ago");
+  const [lastSync, setLastSync] = useState("Just now");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleSync = async () => {
     setIsSyncing(true);
-    // Simulate sync process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSyncing(false);
-    setLastSync("Just now");
+    try {
+      // Invalidate all queries to refetch data
+      await queryClient.invalidateQueries();
+      setLastSync("Just now");
+      toast({
+        title: "Sync Complete",
+        description: "All data has been synchronized successfully.",
+      });
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -23,21 +40,15 @@ export const SyncStatusWidget = () => {
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {isOnline ? (
-              <Cloud className="h-5 w-5 text-green-600" />
-            ) : (
-              <CloudOff className="h-5 w-5 text-red-600" />
-            )}
+            <Cloud className="h-5 w-5 text-green-600" />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">
-                  {isOnline ? "Online" : "Offline Mode"}
-                </span>
+                <span className="font-medium text-sm">Online</span>
                 <Badge 
-                  variant={isOnline ? "default" : "secondary"} 
-                  className={isOnline ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}
+                  variant="default" 
+                  className="bg-green-100 text-green-800"
                 >
-                  {isOnline ? "Synced" : "Local Only"}
+                  Synced
                 </Badge>
               </div>
               <div className="text-xs text-muted-foreground">
@@ -50,7 +61,7 @@ export const SyncStatusWidget = () => {
             variant="outline" 
             size="sm" 
             onClick={handleSync}
-            disabled={isSyncing || !isOnline}
+            disabled={isSyncing}
             className="h-8"
           >
             {isSyncing ? (
