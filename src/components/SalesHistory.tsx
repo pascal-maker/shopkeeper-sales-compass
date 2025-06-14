@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { ShoppingCart, User, Calendar, ArrowLeft, Receipt } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sale } from "./SalesEntry";
+import { Sale } from "@/types/sales";
 
 interface SalesHistoryProps {
   onBack?: () => void;
