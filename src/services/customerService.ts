@@ -115,7 +115,7 @@ export const customerService = {
       id: transaction.id,
       customerId: transaction.customer_id,
       type: transaction.transaction_type as 'sale' | 'payment',
-      amount: parseFloat(transaction.amount),
+      amount: parseFloat(transaction.amount.toString()),
       notes: transaction.notes,
       date: new Date(transaction.transaction_date),
       synced: transaction.sync_status === 'synced'
@@ -129,7 +129,7 @@ export const customerService = {
       .insert({
         customer_id: transaction.customerId,
         transaction_type: transaction.type,
-        amount: transaction.amount,
+        amount: transaction.amount.toString(),
         notes: transaction.notes,
         transaction_date: transaction.date.toISOString(),
         sync_status: 'synced'
@@ -147,7 +147,7 @@ export const customerService = {
       id: data.id,
       customerId: data.customer_id,
       type: data.transaction_type as 'sale' | 'payment',
-      amount: parseFloat(data.amount),
+      amount: parseFloat(data.amount.toString()),
       notes: data.notes,
       date: new Date(data.transaction_date),
       synced: data.sync_status === 'synced'
