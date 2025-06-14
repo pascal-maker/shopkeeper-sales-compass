@@ -5,18 +5,13 @@ import { PaymentSelection } from "./sales/PaymentSelection";
 import { CustomerSelection } from "./sales/CustomerSelection";
 import { SaleConfirmation } from "./sales/SaleConfirmation";
 import { SaleSummary } from "./sales/SaleSummary";
+import { Customer } from "@/types/customer";
 
 export interface CartItem {
   id: number;
   name: string;
   price: number;
   quantity: number;
-}
-
-export interface Customer {
-  id: number;
-  name: string;
-  phone: string;
 }
 
 export interface Sale {
