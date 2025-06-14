@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,26 +20,57 @@ export const CustomersManager = () => {
 
   // Load data from localStorage on component mount
   useEffect(() => {
+    console.log('CustomersManager: Loading data from localStorage');
+    
     const savedCustomers = localStorage.getItem('customers');
     const savedTransactions = localStorage.getItem('creditTransactions');
     
     if (savedCustomers) {
-      setCustomers(JSON.parse(savedCustomers));
+      try {
+        const parsedCustomers = JSON.parse(savedCustomers);
+        // Convert date strings back to Date objects
+        const customersWithDates = parsedCustomers.map((customer: any) => ({
+          ...customer,
+          createdAt: new Date(customer.createdAt),
+          updatedAt: new Date(customer.updatedAt)
+        }));
+        console.log('CustomersManager: Loaded customers:', customersWithDates);
+        setCustomers(customersWithDates);
+      } catch (error) {
+        console.error('Error parsing customers from localStorage:', error);
+      }
     }
     
     if (savedTransactions) {
-      setCreditTransactions(JSON.parse(savedTransactions));
+      try {
+        const parsedTransactions = JSON.parse(savedTransactions);
+        // Convert date strings back to Date objects
+        const transactionsWithDates = parsedTransactions.map((transaction: any) => ({
+          ...transaction,
+          date: new Date(transaction.date)
+        }));
+        console.log('CustomersManager: Loaded transactions:', transactionsWithDates);
+        setCreditTransactions(transactionsWithDates);
+      } catch (error) {
+        console.error('Error parsing transactions from localStorage:', error);
+      }
     }
   }, []);
 
   // Save customers to localStorage whenever customers change
   useEffect(() => {
-    localStorage.setItem('customers', JSON.stringify(customers));
+    if (customers.length > 0) {
+      console.log('CustomersManager: Saving customers to localStorage:', customers);
+      localStorage.setItem('customers', JSON.stringify(customers));
+    }
   }, [customers]);
 
   // Save credit transactions to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions));
+    if (creditTransactions.length > 0) {
+      console.log('CustomersManager: Saving transactions to localStorage:', creditTransactions);
+      localStorage.setItem('creditTransactions', JSON.stringify(creditTransactions));
+    }
   }, [creditTransactions]);
 
   const addCustomer = (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) => {
@@ -52,7 +82,12 @@ export const CustomersManager = () => {
       synced: false
     };
 
-    setCustomers(prev => [...prev, newCustomer]);
+    console.log('CustomersManager: Adding new customer:', newCustomer);
+    setCustomers(prev => {
+      const updated = [...prev, newCustomer];
+      console.log('CustomersManager: Updated customers list:', updated);
+      return updated;
+    });
     
     toast({
       title: "Customer Added",
