@@ -16,7 +16,7 @@ export interface Product {
 }
 
 export interface CartItem {
-  id: number;
+  id: string; // Changed from number to string
   name: string;
   price: number;
   quantity: number;
@@ -24,6 +24,8 @@ export interface CartItem {
 
 export const updateInventoryAfterSale = (cartItems: CartItem[]): { success: boolean; errors: string[] } => {
   try {
+    console.log('Starting inventory update for cart items:', cartItems);
+    
     // Get current products from localStorage
     const storedProducts = localStorage.getItem('products');
     if (!storedProducts) {
@@ -36,14 +38,22 @@ export const updateInventoryAfterSale = (cartItems: CartItem[]): { success: bool
       updatedAt: new Date(product.updatedAt)
     }));
 
+    console.log('Loaded products from storage:', products.map(p => ({ id: p.id, name: p.name, quantity: p.quantity })));
+
     const errors: string[] = [];
     const updatedProducts = [...products];
 
     // Update quantities for each cart item
     cartItems.forEach(cartItem => {
-      const productIndex = updatedProducts.findIndex(product => product.id === cartItem.id.toString());
+      console.log(`Looking for product with ID: "${cartItem.id}" (type: ${typeof cartItem.id})`);
+      
+      const productIndex = updatedProducts.findIndex(product => {
+        console.log(`Comparing with product ID: "${product.id}" (type: ${typeof product.id})`);
+        return product.id === cartItem.id; // Direct string comparison now
+      });
       
       if (productIndex === -1) {
+        console.log('Available product IDs:', updatedProducts.map(p => p.id));
         errors.push(`Product ${cartItem.name} not found in inventory`);
         return;
       }
@@ -68,6 +78,7 @@ export const updateInventoryAfterSale = (cartItems: CartItem[]): { success: bool
 
     // If there are errors, don't save the changes
     if (errors.length > 0) {
+      console.log('Inventory update failed with errors:', errors);
       return { success: false, errors };
     }
 
@@ -97,7 +108,7 @@ export const checkStockAvailability = (cartItems: CartItem[]): { available: bool
     const errors: string[] = [];
 
     cartItems.forEach(cartItem => {
-      const product = products.find(p => p.id === cartItem.id.toString());
+      const product = products.find(p => p.id === cartItem.id); // Direct string comparison
       
       if (!product) {
         errors.push(`Product ${cartItem.name} not found in inventory`);

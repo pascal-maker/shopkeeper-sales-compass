@@ -9,7 +9,7 @@ import { updateInventoryAfterSale } from "@/services/inventoryService";
 import { useToast } from "@/hooks/use-toast";
 
 export interface CartItem {
-  id: number;
+  id: string; // Changed from number to string
   name: string;
   price: number;
   quantity: number;
@@ -33,7 +33,8 @@ export const SalesEntry = () => {
   const [completedSale, setCompletedSale] = useState<Sale | undefined>();
   const { toast } = useToast();
 
-  const addToCart = (product: { id: number; name: string; price: number }) => {
+  const addToCart = (product: { id: string; name: string; price: number }) => {
+    console.log('Adding product to cart:', product);
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.id === product.id);
       if (existingItem) {
@@ -47,7 +48,7 @@ export const SalesEntry = () => {
     });
   };
 
-  const updateQuantity = (productId: number, newQuantity: number) => {
+  const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(prevCart => prevCart.filter(item => item.id !== productId));
     } else {
@@ -61,7 +62,7 @@ export const SalesEntry = () => {
     }
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string) => {
     setCart(prevCart => prevCart.filter(item => item.id !== productId));
   };
 
@@ -85,6 +86,7 @@ export const SalesEntry = () => {
 
   const handleConfirmSale = () => {
     console.log('Confirming sale, updating inventory...');
+    console.log('Cart items for inventory update:', cart);
     
     // Update inventory before saving the sale
     const inventoryResult = updateInventoryAfterSale(cart);

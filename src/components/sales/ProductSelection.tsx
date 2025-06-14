@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Search, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,9 +18,9 @@ interface Product {
 
 interface ProductSelectionProps {
   cart: CartItem[];
-  onAddToCart: (product: { id: number; name: string; price: number }) => void;
-  onUpdateQuantity: (productId: number, quantity: number) => void;
-  onRemoveFromCart: (productId: number) => void;
+  onAddToCart: (product: { id: string; name: string; price: number }) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemoveFromCart: (productId: string) => void;
   totalAmount: number;
   onProceedToPayment: () => void;
 }
@@ -68,20 +67,20 @@ export const ProductSelection = ({
   );
 
   const getCartQuantity = (productId: string) => {
-    const cartItem = cart.find(item => item.id === parseInt(productId));
+    const cartItem = cart.find(item => item.id === productId);
     return cartItem ? cartItem.quantity : 0;
   };
 
   const handleAddToCart = (product: Product) => {
     onAddToCart({
-      id: parseInt(product.id),
+      id: product.id, // Keep as string
       name: product.name,
       price: product.sellingPrice
     });
   };
 
   const handleUpdateQuantity = (productId: string, newQuantity: number) => {
-    onUpdateQuantity(parseInt(productId), newQuantity);
+    onUpdateQuantity(productId, newQuantity);
   };
 
   if (products.length === 0) {
