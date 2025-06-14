@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Package, AlertTriangle, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Package, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -138,22 +137,6 @@ export const InventorySnapshot = () => {
             <p className="text-sm text-muted-foreground">No products in inventory</p>
           </div>
         )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-10"
-            onClick={() => window.dispatchEvent(new CustomEvent('openAddProduct'))}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Product
-          </Button>
-          <Button variant="outline" size="sm" className="h-10">
-            <Package className="h-4 w-4 mr-1" />
-            Add Stock
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
