@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { QuickSalesEntry } from "@/components/QuickSalesEntry";
@@ -9,6 +8,7 @@ import { NavigationTabs } from "@/components/NavigationTabs";
 import { SalesHistory } from "@/components/SalesHistory";
 import { ProductsManager } from "@/components/ProductsManager";
 import { CustomersManager } from "@/components/CustomersManager";
+import ReportsPage from "./ReportsPage";
 
 const Index = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
@@ -21,6 +21,8 @@ const Index = () => {
         return <ProductsManager />;
       case "customers":
         return <CustomersManager />;
+      case "reports":
+        return <ReportsPage />;
       case "dashboard":
       default:
         return (
