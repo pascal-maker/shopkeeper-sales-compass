@@ -25,10 +25,25 @@ export const CustomerList = ({ customers, onSelectCustomer }: CustomerListProps)
     );
   }
 
+  // Sort customers: those with credit (totalCredit > 0) first, then others
+  const sortedCustomers = [...customers].sort((a, b) => {
+    // If one has credit and the other doesn't, prioritize the one with credit
+    if (a.totalCredit > 0 && b.totalCredit <= 0) return -1;
+    if (a.totalCredit <= 0 && b.totalCredit > 0) return 1;
+    
+    // If both have credit or both don't have credit, sort by credit amount (highest first)
+    if (a.totalCredit > 0 && b.totalCredit > 0) {
+      return b.totalCredit - a.totalCredit;
+    }
+    
+    // For customers without credit, sort alphabetically by name
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-3 pb-6">
-        {customers.map((customer) => (
+        {sortedCustomers.map((customer) => (
           <Card
             key={customer.id}
             className="cursor-pointer hover:shadow-md transition-shadow"
