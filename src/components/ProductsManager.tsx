@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Package, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,9 @@ import { AddProductForm } from "./products/AddProductForm";
 import { BatchProductEntry } from "./products/BatchProductEntry";
 import { ProductList } from "./products/ProductList";
 import { useToast } from "@/hooks/use-toast";
+import { ProductsManagerHeader } from "./products/ProductsManagerHeader";
+import { ProductsSearchBar } from "./products/ProductsSearchBar";
+import { ProductStatsCards } from "./products/ProductStatsCards";
 
 export interface Product {
   id: string;
@@ -160,84 +162,23 @@ export const ProductsManager = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Products</h1>
-          <div className="flex gap-2">
-            <Sheet open={isAddFormOpen} onOpenChange={setIsAddFormOpen}>
-              <SheetTrigger asChild>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Add New Product</SheetTitle>
-                </SheetHeader>
-                <AddProductForm
-                  onSubmit={(productData) => {
-                    addProduct(productData);
-                    setIsAddFormOpen(false);
-                  }}
-                  onCancel={() => setIsAddFormOpen(false)}
-                />
-              </SheetContent>
-            </Sheet>
-
-            <Sheet open={isBatchFormOpen} onOpenChange={setIsBatchFormOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Batch
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full max-w-none">
-                <SheetHeader>
-                  <SheetTitle>Add Multiple Products</SheetTitle>
-                </SheetHeader>
-                <BatchProductEntry
-                  onSubmit={(productsData) => {
-                    addMultipleProducts(productsData);
-                    setIsBatchFormOpen(false);
-                  }}
-                  onCancel={() => setIsBatchFormOpen(false)}
-                />
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-
+        <ProductsManagerHeader
+          isAddFormOpen={isAddFormOpen}
+          setIsAddFormOpen={setIsAddFormOpen}
+          isBatchFormOpen={isBatchFormOpen}
+          setIsBatchFormOpen={setIsBatchFormOpen}
+          addProduct={addProduct}
+          addMultipleProducts={addMultipleProducts}
+        />
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <ProductsSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </div>
-
       {/* Stats */}
       <div className="p-4">
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{products.length}</div>
-              <div className="text-sm text-muted-foreground">Total Products</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {products.filter(p => p.quantity <= 10).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Low Stock</div>
-            </CardContent>
-          </Card>
-        </div>
-
+        <ProductStatsCards
+          totalProducts={products.length}
+          lowStockCount={products.filter(p => p.quantity <= 10).length}
+        />
         {/* Product List */}
         <ProductList
           products={filteredProducts}
