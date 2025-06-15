@@ -227,9 +227,9 @@ export const CustomersManager = () => {
       case 'list':
       default:
         return (
-          <>
-            {/* Header */}
-            <div className="bg-card border-b border-border px-4 py-4">
+          <div className="h-full flex flex-col">
+            {/* Header - Fixed height */}
+            <div className="bg-card border-b border-border px-4 py-4 flex-shrink-0">
               <h1 className="text-2xl font-bold mb-4">Your Customers</h1>
               
               {/* Search Bar */}
@@ -255,8 +255,8 @@ export const CustomersManager = () => {
               </Button>
             </div>
 
-            {/* Customer List */}
-            <div className="flex-1 overflow-auto">
+            {/* Customer List - Scrollable area */}
+            <div className="flex-1 min-h-0">
               <CustomerList
                 customers={filteredCustomers}
                 onSelectCustomer={(customer) => {
@@ -265,7 +265,7 @@ export const CustomersManager = () => {
                 }}
               />
             </div>
-          </>
+          </div>
         );
     }
   };
