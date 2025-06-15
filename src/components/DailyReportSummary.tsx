@@ -2,12 +2,17 @@
 import { TrendingUp, ShoppingBag, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Mocked weekly top products data (replace with query in the future)
+const topProductsOfWeek = [
+  { name: "Coca Cola 500ml", sold: 37 },
+  { name: "Fanta 330ml", sold: 25 },
+  { name: "Sprite 500ml", sold: 21 }
+];
+
 export const DailyReportSummary = () => {
   const todayStats = {
     totalSales: 1250,
-    transactions: 32,
-    topProduct: "Coca Cola 500ml",
-    topProductSold: 18
+    transactions: 32
   };
 
   return (
@@ -15,7 +20,7 @@ export const DailyReportSummary = () => {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-green-600" />
-          Today's Summary
+          Insight
         </CardTitle>
       </CardHeader>
       
@@ -28,7 +33,7 @@ export const DailyReportSummary = () => {
               </div>
               <div>
                 <div className="font-semibold text-green-800">${todayStats.totalSales}</div>
-                <div className="text-sm text-green-600">Total Sales</div>
+                <div className="text-sm text-green-600">Total Sales Today</div>
               </div>
             </div>
           </div>
@@ -40,15 +45,21 @@ export const DailyReportSummary = () => {
               </div>
               <div>
                 <div className="font-semibold text-blue-800">{todayStats.transactions}</div>
-                <div className="text-sm text-blue-600">Transactions</div>
+                <div className="text-sm text-blue-600">Transactions Today</div>
               </div>
             </div>
           </div>
 
           <div className="p-3 bg-muted/30 rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Top Selling Product</div>
-            <div className="font-medium">{todayStats.topProduct}</div>
-            <div className="text-sm text-primary">{todayStats.topProductSold} units sold</div>
+            <div className="text-sm text-muted-foreground mb-1">Top 3 Selling Products This Week</div>
+            <ol className="space-y-1">
+              {topProductsOfWeek.map((product, idx) => (
+                <li key={product.name} className="flex justify-between items-center">
+                  <span className="font-medium">{idx + 1}. {product.name}</span>
+                  <span className="text-sm text-primary">{product.sold} sold</span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </CardContent>
