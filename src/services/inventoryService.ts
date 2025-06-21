@@ -1,3 +1,4 @@
+
 import { CartItem } from "@/types/sales";
 
 export interface Product {
@@ -12,6 +13,7 @@ export interface Product {
   expiryDate?: string;
   createdAt: Date;
   updatedAt: Date;
+  synced?: boolean; // Add synced property for sync tracking
 }
 
 export const updateInventoryAfterSale = (cartItems: CartItem[]): { success: boolean; errors: string[] } => {

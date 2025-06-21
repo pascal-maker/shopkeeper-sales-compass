@@ -144,7 +144,7 @@ class SyncService {
   // Sync products to Supabase
   private async syncProducts(): Promise<SyncResult> {
     console.log('SyncService: Syncing products...');
-    const products: Product[] = JSON.parse(localStorage.getItem('products') || '[]').map((p: any) => ({
+    const products: (Product & { synced?: boolean })[] = JSON.parse(localStorage.getItem('products') || '[]').map((p: any) => ({
       ...p,
       createdAt: new Date(p.createdAt),
       updatedAt: new Date(p.updatedAt)
