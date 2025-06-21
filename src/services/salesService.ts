@@ -1,13 +1,54 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, CartItem } from "@/types/sales";
 import { Customer } from "@/types/customer";
-import { productSyncService, LocalProduct } from "./productSyncService";
+import { Product } from "./inventoryService";
 
 // Helper function to check if a string is a valid UUID
 const isValidUUID = (str: string): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
+};
+
+// Helper function to ensure products exist in Supabase
+const ensureProductsExistInSupabase = async (products: Product[]): Promise<{ success: boolean; errors: string[] }> => {
+  const errors: string[] = [];
+  
+  for (const product of products) {
+    try {
+      // Check if product already exists
+      const { data: existingProduct } = await supabase
+        .from('products')
+        .select('id')
+        .eq('name', product.name)
+        .maybeSingle();
+
+      if (!existingProduct) {
+        // Create new product
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            name: product.name,
+            selling_price: product.sellingPrice,
+            cost_price: product.costPrice || null,
+            quantity: product.quantity,
+            unit_type: product.unitType || 'piece',
+            category: product.category || null,
+            sku: product.sku || null,
+            expiry_date: product.expiryDate || null,
+            sync_status: 'synced'
+          });
+
+        if (error) {
+          errors.push(`Failed to sync product ${product.name}: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`Failed to sync product ${product.name}: ${errorMsg}`);
+    }
+  }
+
+  return { success: errors.length === 0, errors };
 };
 
 export const salesService = {
@@ -28,7 +69,7 @@ export const salesService = {
       // Get localStorage products to sync any missing ones
       const storedProducts = localStorage.getItem('products');
       if (storedProducts) {
-        const localProducts: LocalProduct[] = JSON.parse(storedProducts).map((product: any) => ({
+        const localProducts: Product[] = JSON.parse(storedProducts).map((product: any) => ({
           ...product,
           createdAt: new Date(product.createdAt),
           updatedAt: new Date(product.updatedAt)
@@ -39,7 +80,7 @@ export const salesService = {
         const relevantProducts = localProducts.filter(product => saleProductIds.includes(product.id));
         
         if (relevantProducts.length > 0) {
-          const syncResult = await productSyncService.ensureProductsExistInSupabase(relevantProducts);
+          const syncResult = await ensureProductsExistInSupabase(relevantProducts);
           if (!syncResult.success) {
             console.error('SalesService: Failed to sync products:', syncResult.errors);
             return { saleId: '', success: false, error: `Product sync failed: ${syncResult.errors.join(', ')}` };
