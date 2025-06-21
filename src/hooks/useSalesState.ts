@@ -92,30 +92,37 @@ export const useSalesState = () => {
       timestamp: new Date()
     };
     
-    // Save sale to Supabase database
-    console.log('Saving sale to database...');
+    // Save sale to localStorage first with synced: false
+    const saleWithMeta = { 
+      ...sale, 
+      id: Date.now(), 
+      synced: false  // Mark as unsynced initially
+    };
+    
+    const existingSales = JSON.parse(localStorage.getItem('sales') || '[]');
+    existingSales.push(saleWithMeta);
+    localStorage.setItem('sales', JSON.stringify(existingSales));
+    
+    // Try to save to Supabase in background
+    console.log('Attempting to save sale to database...');
     const saveResult = await salesService.saveSale(sale);
     
-    if (!saveResult.success) {
-      // Show error toast
-      toast({
-        title: "Sale Error",
-        description: saveResult.error || "Failed to save sale to database",
-        variant: "destructive"
-      });
-      console.error('Sale save failed:', saveResult.error);
-      return;
+    if (saveResult.success) {
+      // Mark as synced in localStorage
+      const updatedSales = existingSales.map((s: any) => 
+        s.id === saleWithMeta.id ? { ...s, synced: true } : s
+      );
+      localStorage.setItem('sales', JSON.stringify(updatedSales));
+      console.log('Sale saved to database and marked as synced');
+    } else {
+      console.log('Sale saved locally but failed to sync to database:', saveResult.error);
+      // Sale is already saved locally with synce: false, so it will be retried later
     }
-
-    // Also save to localStorage for offline functionality
-    const existingSales = JSON.parse(localStorage.getItem('sales') || '[]');
-    existingSales.push({ ...sale, id: Date.now(), synced: true });
-    localStorage.setItem('sales', JSON.stringify(existingSales));
     
     // Dispatch custom event to notify other components of new sale
     window.dispatchEvent(new Event('storage'));
     
-    console.log('Sale completed successfully. Inventory updated and sale saved to database.');
+    console.log('Sale completed successfully. Inventory updated and sale saved locally.');
     
     // Show success toast
     const successMessage = paymentType === 'credit' 
@@ -124,7 +131,7 @@ export const useSalesState = () => {
     
     toast({
       title: "Sale Completed",
-      description: successMessage,
+      description: successMessage + (saveResult.success ? "" : " (Will sync when online)"),
     });
     
     setCompletedSale(sale);

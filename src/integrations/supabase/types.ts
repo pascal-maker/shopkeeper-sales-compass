@@ -65,6 +65,13 @@ export type Database = {
             foreignKeyName: "credit_transactions_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
+            referencedRelation: "daily_sales_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
@@ -261,6 +268,13 @@ export type Database = {
             foreignKeyName: "sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
+            referencedRelation: "daily_sales_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
@@ -381,17 +395,54 @@ export type Database = {
       }
       daily_sales_summary: {
         Row: {
-          cash_revenue: number | null
-          cash_sales: number | null
-          credit_revenue: number | null
-          credit_sales: number | null
-          mobile_money_revenue: number | null
-          mobile_money_sales: number | null
+          created_at: string | null
+          customer_id: string | null
+          id: string | null
+          local_id: string | null
+          notes: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"] | null
           sale_date: string | null
-          total_revenue: number | null
-          total_sales: number | null
+          sync_status: Database["public"]["Enums"]["sync_status"] | null
+          total_amount: number | null
         }
-        Relationships: []
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string | null
+          local_id?: string | null
+          notes?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
+          sale_date?: string | null
+          sync_status?: Database["public"]["Enums"]["sync_status"] | null
+          total_amount?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string | null
+          local_id?: string | null
+          notes?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
+          sale_date?: string | null
+          sync_status?: Database["public"]["Enums"]["sync_status"] | null
+          total_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_credit_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       low_stock_products: {
         Row: {
