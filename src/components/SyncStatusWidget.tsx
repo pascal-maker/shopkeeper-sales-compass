@@ -20,20 +20,31 @@ export const SyncStatusWidget = () => {
   // Load initial sync status
   useEffect(() => {
     const loadSyncStatus = async () => {
-      const status = await syncService.getSyncStatus();
-      setSyncStatus(status);
+      try {
+        const status = await syncService.getSyncStatus();
+        setSyncStatus(status);
+        console.log('SyncStatusWidget: Initial sync status loaded:', status);
+      } catch (error) {
+        console.error('SyncStatusWidget: Failed to load initial sync status:', error);
+      }
     };
     loadSyncStatus();
 
     // Subscribe to sync status changes
-    const unsubscribe = syncService.onSyncStatusChange(setSyncStatus);
+    const unsubscribe = syncService.onSyncStatusChange((status) => {
+      console.log('SyncStatusWidget: Sync status changed:', status);
+      setSyncStatus(status);
+    });
+    
     return unsubscribe;
   }, []);
 
   const handleSync = async () => {
     setIsSyncing(true);
     try {
+      console.log('SyncStatusWidget: Starting sync...');
       const result = await syncService.syncAll();
+      console.log('SyncStatusWidget: Sync completed:', result);
       
       if (result.success) {
         toast({
@@ -46,9 +57,12 @@ export const SyncStatusWidget = () => {
           description: `Synced ${result.synced} items. ${result.errors.length} errors occurred.`,
           variant: "destructive",
         });
+        
+        // Log errors for debugging
+        console.error('SyncStatusWidget: Sync errors:', result.errors);
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('SyncStatusWidget: Sync error:', error);
       toast({
         title: "Sync Failed",
         description: "Failed to sync data. Please try again.",
@@ -62,7 +76,9 @@ export const SyncStatusWidget = () => {
   const handlePullFromSupabase = async () => {
     setIsSyncing(true);
     try {
+      console.log('SyncStatusWidget: Starting pull from Supabase...');
       const result = await syncService.pullFromSupabase();
+      console.log('SyncStatusWidget: Pull completed:', result);
       
       if (result.success) {
         toast({
@@ -75,9 +91,12 @@ export const SyncStatusWidget = () => {
           description: `Retrieved ${result.synced} items. ${result.errors.length} errors occurred.`,
           variant: "destructive",
         });
+        
+        // Log errors for debugging
+        console.error('SyncStatusWidget: Pull errors:', result.errors);
       }
     } catch (error) {
-      console.error('Pull error:', error);
+      console.error('SyncStatusWidget: Pull error:', error);
       toast({
         title: "Pull Failed",
         description: "Failed to pull data from server. Please try again.",
@@ -91,18 +110,23 @@ export const SyncStatusWidget = () => {
   const formatLastSync = (lastSync: Date | null) => {
     if (!lastSync) return "Never";
     
-    const now = new Date();
-    const diffMs = now.getTime() - lastSync.getTime();
-    const diffMinutes = Math.floor(diffMs / 60000);
-    
-    if (diffMinutes < 1) return "Just now";
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
+    try {
+      const now = new Date();
+      const diffMs = now.getTime() - lastSync.getTime();
+      const diffMinutes = Math.floor(diffMs / 60000);
+      
+      if (diffMinutes < 1) return "Just now";
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+      
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    } catch (error) {
+      console.error('SyncStatusWidget: Error formatting last sync time:', error);
+      return "Unknown";
+    }
   };
 
   const getStatusColor = () => {
@@ -150,7 +174,7 @@ export const SyncStatusWidget = () => {
                 Last sync: {formatLastSync(syncStatus.lastSync)}
               </div>
               {syncStatus.errors.length > 0 && (
-                <div className="text-xs text-orange-600 mt-1">
+                <div className="text-xs text-orange-600 mt-1" title={syncStatus.errors.join('; ')}>
                   {syncStatus.errors.length} sync error{syncStatus.errors.length !== 1 ? 's' : ''}
                 </div>
               )}

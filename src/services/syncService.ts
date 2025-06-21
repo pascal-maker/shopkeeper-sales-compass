@@ -19,38 +19,66 @@ class SyncService {
   }
 
   private notifySyncStatusChange(status: SyncStatus) {
-    this.syncCallbacks.forEach(callback => callback(status));
+    this.syncCallbacks.forEach(callback => {
+      try {
+        callback(status);
+      } catch (error) {
+        console.error('Error in sync status callback:', error);
+      }
+    });
   }
 
   // Check if we're online and can sync
   async checkConnectivity(): Promise<boolean> {
-    return connectivityService.checkConnectivity();
+    try {
+      return await connectivityService.checkConnectivity();
+    } catch (error) {
+      console.error('Connectivity check failed:', error);
+      return false;
+    }
   }
 
   // Get current sync status
   async getSyncStatus(): Promise<SyncStatus> {
-    const isOnline = await this.checkConnectivity();
-    const lastSyncStr = localStorage.getItem('lastSync');
-    const lastSync = lastSyncStr ? new Date(lastSyncStr) : null;
-    
-    // Count pending items
-    const products = JSON.parse(localStorage.getItem('products') || '[]');
-    const customers = JSON.parse(localStorage.getItem('customers') || '[]');
-    const sales = JSON.parse(localStorage.getItem('sales') || '[]');
-    const creditTransactions = JSON.parse(localStorage.getItem('creditTransactions') || '[]');
-    
-    const pendingProducts = products.filter((p: any) => !p.synced).length;
-    const pendingCustomers = customers.filter((c: any) => !c.synced).length;
-    const pendingSales = sales.filter((s: any) => !s.synced).length;
-    const pendingTransactions = creditTransactions.filter((t: any) => !t.synced).length;
-    const pendingSyncs = pendingProducts + pendingCustomers + pendingSales + pendingTransactions;
+    try {
+      const isOnline = await this.checkConnectivity();
+      const lastSyncStr = localStorage.getItem('lastSync');
+      const lastSync = lastSyncStr ? new Date(lastSyncStr) : null;
+      
+      // Count pending items safely
+      let pendingSyncs = 0;
+      try {
+        const products = JSON.parse(localStorage.getItem('products') || '[]');
+        const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+        const sales = JSON.parse(localStorage.getItem('sales') || '[]');
+        const creditTransactions = JSON.parse(localStorage.getItem('creditTransactions') || '[]');
+        
+        const pendingProducts = products.filter((p: any) => !p.synced).length;
+        const pendingCustomers = customers.filter((c: any) => !c.synced).length;
+        const pendingSales = sales.filter((s: any) => !s.synced).length;
+        const pendingTransactions = creditTransactions.filter((t: any) => !t.synced).length;
+        pendingSyncs = pendingProducts + pendingCustomers + pendingSales + pendingTransactions;
+      } catch (error) {
+        console.error('Error counting pending syncs:', error);
+      }
 
-    return {
-      isOnline,
-      lastSync,
-      pendingSyncs,
-      errors: JSON.parse(localStorage.getItem('syncErrors') || '[]')
-    };
+      const errors = JSON.parse(localStorage.getItem('syncErrors') || '[]');
+
+      return {
+        isOnline,
+        lastSync,
+        pendingSyncs,
+        errors
+      };
+    } catch (error) {
+      console.error('Error getting sync status:', error);
+      return {
+        isOnline: false,
+        lastSync: null,
+        pendingSyncs: 0,
+        errors: ['Failed to get sync status']
+      };
+    }
   }
 
   // Sync all data
@@ -73,32 +101,52 @@ class SyncService {
       }
 
       // Sync in dependency order: Products -> Customers -> Sales -> Credit Transactions
-      const productsResult = await productSync.syncProducts();
-      if (!productsResult.success) {
-        errors.push(...productsResult.errors);
-      } else {
-        totalSynced += productsResult.synced;
+      try {
+        const productsResult = await productSync.syncProducts();
+        if (!productsResult.success) {
+          errors.push(...productsResult.errors);
+        } else {
+          totalSynced += productsResult.synced;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Product sync failed: ${errorMsg}`);
       }
 
-      const customersResult = await customerSync.syncCustomers();
-      if (!customersResult.success) {
-        errors.push(...customersResult.errors);
-      } else {
-        totalSynced += customersResult.synced;
+      try {
+        const customersResult = await customerSync.syncCustomers();
+        if (!customersResult.success) {
+          errors.push(...customersResult.errors);
+        } else {
+          totalSynced += customersResult.synced;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Customer sync failed: ${errorMsg}`);
       }
 
-      const salesResult = await salesSync.syncSales();
-      if (!salesResult.success) {
-        errors.push(...salesResult.errors);
-      } else {
-        totalSynced += salesResult.synced;
+      try {
+        const salesResult = await salesSync.syncSales();
+        if (!salesResult.success) {
+          errors.push(...salesResult.errors);
+        } else {
+          totalSynced += salesResult.synced;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Sales sync failed: ${errorMsg}`);
       }
 
-      const transactionsResult = await creditTransactionSync.syncCreditTransactions();
-      if (!transactionsResult.success) {
-        errors.push(...transactionsResult.errors);
-      } else {
-        totalSynced += transactionsResult.synced;
+      try {
+        const transactionsResult = await creditTransactionSync.syncCreditTransactions();
+        if (!transactionsResult.success) {
+          errors.push(...transactionsResult.errors);
+        } else {
+          totalSynced += transactionsResult.synced;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Credit transactions sync failed: ${errorMsg}`);
       }
 
       // Update last sync time
@@ -119,7 +167,12 @@ class SyncService {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown sync error';
       console.error('SyncService: Sync failed:', errorMsg);
-      return { success: false, errors: [errorMsg], synced: totalSynced };
+      errors.push(errorMsg);
+      
+      // Store errors even if sync failed
+      localStorage.setItem('syncErrors', JSON.stringify(errors));
+      
+      return { success: false, errors, synced: totalSynced };
     } finally {
       this.syncInProgress = false;
     }
@@ -132,47 +185,78 @@ class SyncService {
     let synced = 0;
 
     try {
+      // Check connectivity first
+      const isOnline = await this.checkConnectivity();
+      if (!isOnline) {
+        return { success: false, errors: ['No internet connection'], synced: 0 };
+      }
+
       // Pull products
-      const productsResult = await productSync.pullProducts();
-      if (productsResult.errors.length > 0) {
-        errors.push(...productsResult.errors);
-      } else {
-        localStorage.setItem('products', JSON.stringify(productsResult.products));
-        synced += productsResult.products.length;
+      try {
+        const productsResult = await productSync.pullProducts();
+        if (productsResult.errors.length > 0) {
+          errors.push(...productsResult.errors);
+        } else {
+          localStorage.setItem('products', JSON.stringify(productsResult.products));
+          synced += productsResult.products.length;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Failed to pull products: ${errorMsg}`);
       }
 
       // Pull customers
-      const customersResult = await customerSync.pullCustomers();
-      if (customersResult.errors.length > 0) {
-        errors.push(...customersResult.errors);
-      } else {
-        localStorage.setItem('customers', JSON.stringify(customersResult.customers));
-        synced += customersResult.customers.length;
+      try {
+        const customersResult = await customerSync.pullCustomers();
+        if (customersResult.errors.length > 0) {
+          errors.push(...customersResult.errors);
+        } else {
+          localStorage.setItem('customers', JSON.stringify(customersResult.customers));
+          synced += customersResult.customers.length;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Failed to pull customers: ${errorMsg}`);
       }
 
       // Pull credit transactions
-      const transactionsResult = await creditTransactionSync.pullCreditTransactions();
-      if (transactionsResult.errors.length > 0) {
-        errors.push(...transactionsResult.errors);
-      } else {
-        localStorage.setItem('creditTransactions', JSON.stringify(transactionsResult.transactions));
-        synced += transactionsResult.transactions.length;
+      try {
+        const transactionsResult = await creditTransactionSync.pullCreditTransactions();
+        if (transactionsResult.errors.length > 0) {
+          errors.push(...transactionsResult.errors);
+        } else {
+          localStorage.setItem('creditTransactions', JSON.stringify(transactionsResult.transactions));
+          synced += transactionsResult.transactions.length;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Failed to pull credit transactions: ${errorMsg}`);
       }
 
       // Update last sync
       localStorage.setItem('lastSync', new Date().toISOString());
       
-      // Clear sync errors
-      localStorage.removeItem('syncErrors');
+      // Clear sync errors if pull was successful
+      if (errors.length === 0) {
+        localStorage.removeItem('syncErrors');
+      } else {
+        localStorage.setItem('syncErrors', JSON.stringify(errors));
+      }
 
       // Dispatch storage event to update UI
       window.dispatchEvent(new Event('storage'));
+
+      // Notify status change
+      const status = await this.getSyncStatus();
+      this.notifySyncStatusChange(status);
 
       return { success: errors.length === 0, errors, synced };
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, errors: [errorMsg], synced };
+      errors.push(errorMsg);
+      localStorage.setItem('syncErrors', JSON.stringify(errors));
+      return { success: false, errors, synced };
     }
   }
 }

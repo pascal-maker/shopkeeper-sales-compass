@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sale } from "@/types/sales";
 import { SyncResult } from "./types";
 
+// Helper function to check if a string is a valid UUID
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export const salesSync = {
   async syncSales(): Promise<SyncResult> {
     console.log('SalesSync: Syncing sales...');
@@ -48,20 +54,25 @@ export const salesSync = {
 
         // Create sale items
         const saleItemsPromises = sale.items.map(async (item) => {
-          // Find product ID in Supabase by name
-          const { data: productData } = await supabase
-            .from('products')
-            .select('id')
-            .eq('name', item.name)
-            .maybeSingle();
+          let productId = item.id;
+          
+          // If the product ID is not a valid UUID, look up the product by name
+          if (!isValidUUID(item.id)) {
+            const { data: productData } = await supabase
+              .from('products')
+              .select('id')
+              .eq('name', item.name)
+              .maybeSingle();
 
-          if (!productData) {
-            throw new Error(`Product "${item.name}" not found in database`);
+            if (!productData) {
+              throw new Error(`Product "${item.name}" not found in database`);
+            }
+            productId = productData.id;
           }
 
           return {
             sale_id: saleData.id,
-            product_id: productData.id,
+            product_id: productId,
             quantity: item.quantity,
             unit_price: item.price,
             total_price: item.quantity * item.price,
