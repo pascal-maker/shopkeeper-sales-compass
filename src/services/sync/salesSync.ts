@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Sale } from "@/types/sales";
 import { SyncResult } from "./types";
+import { productEnsureSync } from "./productEnsureSync";
 
 // Helper function to check if a string is a valid UUID
 const isValidUUID = (str: string): boolean => {
@@ -11,7 +12,7 @@ const isValidUUID = (str: string): boolean => {
 
 export const salesSync = {
   async syncSales(): Promise<SyncResult> {
-    console.log('SalesSync: Syncing sales...');
+    console.log('SalesSync: Starting enhanced sales sync...');
     const sales: (Sale & { id: number; synced: boolean })[] = JSON.parse(localStorage.getItem('sales') || '[]').map((s: any) => ({
       ...s,
       timestamp: new Date(s.timestamp)
@@ -22,11 +23,67 @@ export const salesSync = {
       return { success: true, errors: [], synced: 0 };
     }
 
+    // Get all products from localStorage to ensure they exist
+    const storedProducts = localStorage.getItem('products');
+    const localProducts = storedProducts ? JSON.parse(storedProducts).map((p: any) => ({
+      ...p,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt)
+    })) : [];
+
+    // Get unique products used in sales
+    const usedProductIds = new Set<string>();
+    unsyncedSales.forEach(sale => {
+      sale.items.forEach(item => {
+        usedProductIds.add(item.id);
+      });
+    });
+
+    const requiredProducts = localProducts.filter((p: any) => usedProductIds.has(p.id));
+    
+    // Ensure all required products exist in Supabase
+    console.log('SalesSync: Ensuring required products exist in Supabase...');
+    const productEnsureResult = await productEnsureSync.ensureProductsExist(requiredProducts);
+    
+    if (!productEnsureResult.success) {
+      console.error('SalesSync: Failed to ensure products exist:', productEnsureResult.errors);
+      return { success: false, errors: productEnsureResult.errors, synced: 0 };
+    }
+
     const errors: string[] = [];
     let synced = 0;
 
     for (const sale of unsyncedSales) {
       try {
+        console.log(`SalesSync: Processing sale with ${sale.items.length} items...`);
+
+        // Map sale items to use Supabase product IDs and validate inventory
+        const mappedSaleItems = sale.items.map(item => {
+          const supabaseProductId = productEnsureResult.productMap.get(item.id);
+          if (!supabaseProductId) {
+            throw new Error(`Product mapping not found for item: ${item.name} (${item.id})`);
+          }
+          
+          return {
+            product_id: supabaseProductId,
+            quantity: item.quantity,
+            unit_price: item.price,
+            total_price: item.quantity * item.price
+          };
+        });
+
+        // Validate inventory constraints before proceeding
+        const inventoryValidation = await productEnsureSync.validateInventoryConstraints(
+          mappedSaleItems.map(item => ({ ...item, product_id: item.product_id })), 
+          productEnsureResult.productMap
+        );
+
+        if (!inventoryValidation.valid) {
+          console.warn(`SalesSync: Inventory validation failed for sale:`, inventoryValidation.errors);
+          errors.push(...inventoryValidation.errors.map(err => `Sale inventory validation: ${err}`));
+          continue;
+        }
+
         // Map payment type
         const paymentTypeMap = {
           'mobile-money': 'mobile_money' as const,
@@ -34,7 +91,7 @@ export const salesSync = {
           'credit': 'credit' as const
         };
 
-        // Create sale
+        // Create sale in a transaction to ensure consistency
         const { data: saleData, error: saleError } = await supabase
           .from('sales')
           .insert({
@@ -49,49 +106,35 @@ export const salesSync = {
 
         if (saleError) {
           errors.push(`Failed to sync sale: ${saleError.message}`);
+          console.error('SalesSync: Error creating sale:', saleError);
           continue;
         }
 
-        // Create sale items
-        const saleItemsPromises = sale.items.map(async (item) => {
-          let productId = item.id;
-          
-          // If the product ID is not a valid UUID, look up the product by name
-          if (!isValidUUID(item.id)) {
-            const { data: productData } = await supabase
-              .from('products')
-              .select('id')
-              .eq('name', item.name)
-              .maybeSingle();
+        console.log('SalesSync: Sale created successfully, now creating sale items...');
 
-            if (!productData) {
-              throw new Error(`Product "${item.name}" not found in database`);
-            }
-            productId = productData.id;
-          }
+        // Create sale items with proper product IDs
+        const saleItemsWithSaleId = mappedSaleItems.map(item => ({
+          ...item,
+          sale_id: saleData.id,
+          sync_status: 'synced' as const
+        }));
 
-          return {
-            sale_id: saleData.id,
-            product_id: productId,
-            quantity: item.quantity,
-            unit_price: item.price,
-            total_price: item.quantity * item.price,
-            sync_status: 'synced' as const
-          };
-        });
-
-        const saleItems = await Promise.all(saleItemsPromises);
         const { error: itemsError } = await supabase
           .from('sale_items')
-          .insert(saleItems);
+          .insert(saleItemsWithSaleId);
 
         if (itemsError) {
           errors.push(`Failed to sync sale items: ${itemsError.message}`);
+          console.error('SalesSync: Error creating sale items:', itemsError);
           continue;
         }
 
+        console.log('SalesSync: Sale items created successfully');
+
         // If credit sale, create credit transaction
         if (sale.paymentType === 'credit' && sale.customer) {
+          console.log('SalesSync: Creating credit transaction...');
+          
           const { error: creditError } = await supabase
             .from('credit_transactions')
             .insert({
@@ -106,8 +149,11 @@ export const salesSync = {
 
           if (creditError) {
             errors.push(`Failed to create credit transaction: ${creditError.message}`);
+            console.error('SalesSync: Error creating credit transaction:', creditError);
             continue;
           }
+
+          console.log('SalesSync: Credit transaction created successfully');
         }
 
         // Mark as synced in localStorage
@@ -117,12 +163,16 @@ export const salesSync = {
         localStorage.setItem('sales', JSON.stringify(updatedSales));
         synced++;
 
+        console.log(`SalesSync: Successfully synced sale ${sale.id}`);
+
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
         errors.push(`Failed to sync sale: ${errorMsg}`);
+        console.error('SalesSync: Unexpected error syncing sale:', error);
       }
     }
 
+    console.log(`SalesSync: Completed. Synced: ${synced}, Errors: ${errors.length}`);
     return { success: errors.length === 0, errors, synced };
   }
 };

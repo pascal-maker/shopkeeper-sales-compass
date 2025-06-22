@@ -1,7 +1,9 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Sale, CartItem } from "@/types/sales";
 import { Customer } from "@/types/customer";
 import { Product } from "./inventoryService";
+import { productEnsureSync } from "./sync/productEnsureSync";
 
 // Helper function to check if a string is a valid UUID
 const isValidUUID = (str: string): boolean => {
@@ -9,52 +11,10 @@ const isValidUUID = (str: string): boolean => {
   return uuidRegex.test(str);
 };
 
-// Helper function to ensure products exist in Supabase
-const ensureProductsExistInSupabase = async (products: Product[]): Promise<{ success: boolean; errors: string[] }> => {
-  const errors: string[] = [];
-  
-  for (const product of products) {
-    try {
-      // Check if product already exists
-      const { data: existingProduct } = await supabase
-        .from('products')
-        .select('id')
-        .eq('name', product.name)
-        .maybeSingle();
-
-      if (!existingProduct) {
-        // Create new product
-        const { error } = await supabase
-          .from('products')
-          .insert({
-            name: product.name,
-            selling_price: product.sellingPrice,
-            cost_price: product.costPrice || null,
-            quantity: product.quantity,
-            unit_type: product.unitType || 'piece',
-            category: product.category || null,
-            sku: product.sku || null,
-            expiry_date: product.expiryDate || null,
-            sync_status: 'synced'
-          });
-
-        if (error) {
-          errors.push(`Failed to sync product ${product.name}: ${error.message}`);
-        }
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      errors.push(`Failed to sync product ${product.name}: ${errorMsg}`);
-    }
-  }
-
-  return { success: errors.length === 0, errors };
-};
-
 export const salesService = {
   async saveSale(sale: Sale): Promise<{ saleId: string; success: boolean; error?: string }> {
     try {
-      console.log('SalesService: Saving sale to Supabase:', sale);
+      console.log('SalesService: Saving sale with enhanced validation:', sale);
       
       // Convert payment type to match database enum
       const paymentTypeMap = {
@@ -63,32 +23,62 @@ export const salesService = {
         'credit': 'credit' as const
       };
       
-      // Before saving the sale, ensure all products exist in Supabase
-      console.log('SalesService: Ensuring products exist in Supabase before saving sale...');
-      
-      // Get localStorage products to sync any missing ones
+      // Get localStorage products to ensure they exist in Supabase
       const storedProducts = localStorage.getItem('products');
-      if (storedProducts) {
-        const localProducts: Product[] = JSON.parse(storedProducts).map((product: any) => ({
-          ...product,
-          createdAt: new Date(product.createdAt),
-          updatedAt: new Date(product.updatedAt)
-        }));
-
-        // Find products that are in our sale items
-        const saleProductIds = sale.items.map(item => item.id);
-        const relevantProducts = localProducts.filter(product => saleProductIds.includes(product.id));
-        
-        if (relevantProducts.length > 0) {
-          const syncResult = await ensureProductsExistInSupabase(relevantProducts);
-          if (!syncResult.success) {
-            console.error('SalesService: Failed to sync products:', syncResult.errors);
-            return { saleId: '', success: false, error: `Product sync failed: ${syncResult.errors.join(', ')}` };
-          }
-        }
+      if (!storedProducts) {
+        return { saleId: '', success: false, error: 'No products found in local inventory' };
       }
+
+      const localProducts: Product[] = JSON.parse(storedProducts).map((product: any) => ({
+        ...product,
+        createdAt: new Date(product.createdAt),
+        updatedAt: new Date(product.updatedAt)
+      }));
+
+      // Find products that are in our sale items
+      const saleProductIds = sale.items.map(item => item.id);
+      const relevantProducts = localProducts.filter(product => saleProductIds.includes(product.id));
       
-      // First, save the sale
+      if (relevantProducts.length === 0) {
+        return { saleId: '', success: false, error: 'No matching products found in inventory' };
+      }
+
+      // Ensure products exist in Supabase with enhanced validation
+      console.log('SalesService: Ensuring products exist with enhanced validation...');
+      const productEnsureResult = await productEnsureSync.ensureProductsExist(relevantProducts);
+      
+      if (!productEnsureResult.success) {
+        console.error('SalesService: Failed to ensure products exist:', productEnsureResult.errors);
+        return { saleId: '', success: false, error: `Product sync failed: ${productEnsureResult.errors.join(', ')}` };
+      }
+
+      // Map sale items to use Supabase product IDs
+      const mappedSaleItems = sale.items.map(item => {
+        const supabaseProductId = productEnsureResult.productMap.get(item.id);
+        if (!supabaseProductId) {
+          throw new Error(`Product mapping not found for item: ${item.name} (${item.id})`);
+        }
+        
+        return {
+          product_id: supabaseProductId,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.quantity * item.price
+        };
+      });
+
+      // Validate inventory constraints
+      const inventoryValidation = await productEnsureSync.validateInventoryConstraints(
+        mappedSaleItems, 
+        productEnsureResult.productMap
+      );
+
+      if (!inventoryValidation.valid) {
+        console.error('SalesService: Inventory validation failed:', inventoryValidation.errors);
+        return { saleId: '', success: false, error: `Inventory validation failed: ${inventoryValidation.errors.join(', ')}` };
+      }
+
+      // Save the sale
       const { data: saleData, error: saleError } = await supabase
         .from('sales')
         .insert({
@@ -108,48 +98,16 @@ export const salesService = {
 
       console.log('SalesService: Sale saved successfully:', saleData);
 
-      // Handle sale items - need to map localStorage product IDs to database UUIDs
-      const saleItemsPromises = sale.items.map(async (item) => {
-        let productId = item.id;
-        
-        // If the product ID is not a valid UUID, look up the product by name
-        if (!isValidUUID(item.id)) {
-          console.log('SalesService: Looking up product by name:', item.name);
-          const { data: productData, error: productError } = await supabase
-            .from('products')
-            .select('id')
-            .eq('name', item.name)
-            .maybeSingle();
-          
-          if (productError) {
-            console.error('SalesService: Error looking up product by name:', item.name, productError);
-            throw new Error(`Error looking up product "${item.name}": ${productError.message}`);
-          }
-          
-          if (!productData) {
-            console.error('SalesService: Product not found by name:', item.name);
-            throw new Error(`Product "${item.name}" not found in database. Please ensure the product is properly synced.`);
-          }
-          
-          productId = productData.id;
-          console.log('SalesService: Mapped product name to UUID:', item.name, '->', productId);
-        }
-
-        return {
-          sale_id: saleData.id,
-          product_id: productId,
-          quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.quantity * item.price,
-          sync_status: 'synced' as const
-        };
-      });
-
-      const saleItems = await Promise.all(saleItemsPromises);
+      // Save sale items with mapped product IDs
+      const saleItemsWithSaleId = mappedSaleItems.map(item => ({
+        ...item,
+        sale_id: saleData.id,
+        sync_status: 'synced' as const
+      }));
 
       const { error: itemsError } = await supabase
         .from('sale_items')
-        .insert(saleItems);
+        .insert(saleItemsWithSaleId);
 
       if (itemsError) {
         console.error('SalesService: Error saving sale items:', itemsError);
