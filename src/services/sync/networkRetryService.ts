@@ -101,7 +101,7 @@ export class NetworkRetryService {
       const startTime = Date.now();
       
       // Simple connectivity test using Supabase
-      const { error } = await this.executeWithRetry(
+      const response = await this.executeWithRetry(
         async () => {
           const response = await fetch('https://fxsszxmtbugbjsxhpwkt.supabase.co/rest/v1/', {
             method: 'HEAD',
@@ -120,11 +120,6 @@ export class NetworkRetryService {
       );
 
       const latency = Date.now() - startTime;
-
-      if (error) {
-        return { online: false, error: error.message };
-      }
-
       return { online: true, latency };
 
     } catch (error) {
