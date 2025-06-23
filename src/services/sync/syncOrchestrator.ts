@@ -131,9 +131,7 @@ export class SyncOrchestrator {
       if (!productsResult.success) {
         errors.push(...productsResult.errors.map(err => `Products: ${err}`));
       } else {
-        console.log(`SyncOrchestrator: Synced ${produc
-
-tsResult.synced} products`);
+        console.log(`SyncOrchestrator: Synced ${productsResult.synced} products`);
         return productsResult.synced;
       }
     } catch (error) {
