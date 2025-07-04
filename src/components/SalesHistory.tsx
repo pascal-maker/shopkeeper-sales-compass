@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isAfter, isBefore } from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfDay, endOfDay, isWithinInterval } from "date-fns";
 import { Sale } from "@/types/sales";
 
 import { SalesHistoryHeader } from "./sales-history/SalesHistoryHeader";
@@ -41,19 +41,31 @@ export const SalesHistory = ({ onBack }: SalesHistoryProps) => {
   let dateRange: { from: Date; to: Date } = (() => {
     const today = new Date();
     if (filterType === "week") {
-      return { from: startOfWeek(today, { weekStartsOn: 1 }), to: endOfWeek(today, { weekStartsOn: 1 }) };
+      return { 
+        from: startOfDay(startOfWeek(today, { weekStartsOn: 1 })), 
+        to: endOfDay(endOfWeek(today, { weekStartsOn: 1 })) 
+      };
     } else if (filterType === "month") {
-      return { from: startOfMonth(today), to: endOfMonth(today) };
+      return { 
+        from: startOfDay(startOfMonth(today)), 
+        to: endOfDay(endOfMonth(today)) 
+      };
     } else if (filterType === "custom" && customRange.from && customRange.to) {
-      return { from: customRange.from, to: customRange.to };
+      return { 
+        from: startOfDay(customRange.from), 
+        to: endOfDay(customRange.to) 
+      };
     } else {
-      return { from: startOfWeek(today, { weekStartsOn: 1 }), to: endOfWeek(today, { weekStartsOn: 1 }) };
+      return { 
+        from: startOfDay(startOfWeek(today, { weekStartsOn: 1 })), 
+        to: endOfDay(endOfWeek(today, { weekStartsOn: 1 })) 
+      };
     }
   })();
 
   const filteredSales = sales.filter((sale) => {
     const saleDate = new Date(sale.timestamp);
-    return isAfter(saleDate, addDays(dateRange.from, -1)) && isBefore(saleDate, addDays(dateRange.to, 1));
+    return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to });
   });
 
   const totalPages = Math.ceil(filteredSales.length / SALES_PER_PAGE);
