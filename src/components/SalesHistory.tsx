@@ -63,10 +63,25 @@ export const SalesHistory = ({ onBack }: SalesHistoryProps) => {
     }
   })();
 
+  // Debug logging for custom filter
+  console.log('Filter type:', filterType);
+  console.log('Custom range:', customRange);
+  console.log('Date range:', dateRange);
+  console.log('Total sales before filtering:', sales.length);
+
   const filteredSales = sales.filter((sale) => {
     const saleDate = new Date(sale.timestamp);
-    return isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to });
+    const isInRange = isWithinInterval(saleDate, { start: dateRange.from, end: dateRange.to });
+    
+    // Debug each sale filtering
+    if (filterType === "custom") {
+      console.log('Sale date:', saleDate, 'In range:', isInRange);
+    }
+    
+    return isInRange;
   });
+
+  console.log('Filtered sales count:', filteredSales.length);
 
   const totalPages = Math.ceil(filteredSales.length / SALES_PER_PAGE);
   const paginatedSales = filteredSales.slice((currentPage - 1) * SALES_PER_PAGE, currentPage * SALES_PER_PAGE);
