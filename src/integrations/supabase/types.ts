@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_trail: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -21,6 +60,7 @@ export type Database = {
           sync_status: Database["public"]["Enums"]["sync_status"] | null
           transaction_date: string | null
           transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -33,6 +73,7 @@ export type Database = {
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           transaction_date?: string | null
           transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -45,6 +86,7 @@ export type Database = {
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           transaction_date?: string | null
           transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -88,6 +130,7 @@ export type Database = {
           phone: string
           sync_status: Database["public"]["Enums"]["sync_status"] | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -99,6 +142,7 @@ export type Database = {
           phone: string
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -110,6 +154,7 @@ export type Database = {
           phone?: string
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -124,6 +169,7 @@ export type Database = {
           product_id: string | null
           reason: string | null
           sync_status: Database["public"]["Enums"]["sync_status"] | null
+          user_id: string | null
         }
         Insert: {
           adjustment_date?: string | null
@@ -135,6 +181,7 @@ export type Database = {
           product_id?: string | null
           reason?: string | null
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
+          user_id?: string | null
         }
         Update: {
           adjustment_date?: string | null
@@ -146,6 +193,7 @@ export type Database = {
           product_id?: string | null
           reason?: string | null
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -180,6 +228,7 @@ export type Database = {
           sync_status: Database["public"]["Enums"]["sync_status"] | null
           unit_type: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -196,6 +245,7 @@ export type Database = {
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           unit_type?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -211,6 +261,43 @@ export type Database = {
           sku?: string | null
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           unit_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          business_name: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          phone: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }
         Relationships: []
@@ -291,6 +378,7 @@ export type Database = {
           sale_date: string | null
           sync_status: Database["public"]["Enums"]["sync_status"] | null
           total_amount: number
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -302,6 +390,7 @@ export type Database = {
           sale_date?: string | null
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           total_amount: number
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -313,6 +402,7 @@ export type Database = {
           sale_date?: string | null
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           total_amount?: number
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -361,6 +451,30 @@ export type Database = {
           sync_status?: Database["public"]["Enums"]["sync_status"] | null
           synced_at?: string | null
           table_name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -500,9 +614,20 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "cashier" | "manager"
       payment_type: "cash" | "mobile_money" | "credit"
       sync_status: "pending" | "synced" | "failed"
       transaction_type: "sale" | "payment" | "adjustment"
@@ -621,6 +746,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "cashier", "manager"],
       payment_type: ["cash", "mobile_money", "credit"],
       sync_status: ["pending", "synced", "failed"],
       transaction_type: ["sale", "payment", "adjustment"],

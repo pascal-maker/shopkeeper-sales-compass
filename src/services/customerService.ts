@@ -4,11 +4,12 @@ import { Customer, CreditTransaction } from "@/types/customer";
 
 export const customerService = {
   // Customer operations
-  async getCustomers(): Promise<Customer[]> {
-    console.log('CustomerService: Fetching customers from Supabase');
+  async getCustomers(userId: string): Promise<Customer[]> {
+    console.log('CustomerService: Fetching customers from Supabase for user:', userId);
     const { data, error } = await supabase
       .from('customers')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -25,8 +26,8 @@ export const customerService = {
     }));
   },
 
-  async addCustomer(customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>): Promise<Customer> {
-    console.log('CustomerService: Adding customer to Supabase:', customerData);
+  async addCustomer(customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>, userId: string): Promise<Customer> {
+    console.log('CustomerService: Adding customer to Supabase:', customerData, 'for user:', userId);
     const { data, error } = await supabase
       .from('customers')
       .insert({
@@ -34,6 +35,7 @@ export const customerService = {
         phone: customerData.phone,
         location: customerData.location,
         notes: customerData.notes,
+        user_id: userId,
         sync_status: 'synced'
       })
       .select()
@@ -53,8 +55,8 @@ export const customerService = {
     };
   },
 
-  async updateCustomer(customerId: string, updates: Partial<Customer>): Promise<Customer> {
-    console.log('CustomerService: Updating customer:', customerId, updates);
+  async updateCustomer(customerId: string, updates: Partial<Customer>, userId: string): Promise<Customer> {
+    console.log('CustomerService: Updating customer:', customerId, updates, 'for user:', userId);
     const { data, error } = await supabase
       .from('customers')
       .update({
@@ -65,6 +67,7 @@ export const customerService = {
         sync_status: 'synced'
       })
       .eq('id', customerId)
+      .eq('user_id', userId)
       .select()
       .single();
 
@@ -82,12 +85,13 @@ export const customerService = {
     };
   },
 
-  async deleteCustomer(customerId: string): Promise<void> {
-    console.log('CustomerService: Deleting customer:', customerId);
+  async deleteCustomer(customerId: string, userId: string): Promise<void> {
+    console.log('CustomerService: Deleting customer:', customerId, 'for user:', userId);
     const { error } = await supabase
       .from('customers')
       .delete()
-      .eq('id', customerId);
+      .eq('id', customerId)
+      .eq('user_id', userId);
 
     if (error) {
       console.error('CustomerService: Error deleting customer:', error);
@@ -98,11 +102,12 @@ export const customerService = {
   },
 
   // Credit transaction operations
-  async getCreditTransactions(): Promise<CreditTransaction[]> {
-    console.log('CustomerService: Fetching credit transactions from Supabase');
+  async getCreditTransactions(userId: string): Promise<CreditTransaction[]> {
+    console.log('CustomerService: Fetching credit transactions from Supabase for user:', userId);
     const { data, error } = await supabase
       .from('credit_transactions')
       .select('*')
+      .eq('user_id', userId)
       .order('transaction_date', { ascending: false });
 
     if (error) {
@@ -122,8 +127,8 @@ export const customerService = {
     }));
   },
 
-  async addCreditTransaction(transaction: Omit<CreditTransaction, 'id' | 'synced'>): Promise<CreditTransaction> {
-    console.log('CustomerService: Adding credit transaction to Supabase:', transaction);
+  async addCreditTransaction(transaction: Omit<CreditTransaction, 'id' | 'synced'>, userId: string): Promise<CreditTransaction> {
+    console.log('CustomerService: Adding credit transaction to Supabase:', transaction, 'for user:', userId);
     const { data, error } = await supabase
       .from('credit_transactions')
       .insert({
@@ -132,6 +137,7 @@ export const customerService = {
         amount: transaction.amount,
         notes: transaction.notes,
         transaction_date: transaction.date.toISOString(),
+        user_id: userId,
         sync_status: 'synced'
       })
       .select()
