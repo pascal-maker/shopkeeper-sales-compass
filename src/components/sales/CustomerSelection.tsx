@@ -9,6 +9,7 @@ import { Customer } from "@/types/customer";
 import { customerService } from "@/services/customerService";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CustomerSelectionProps {
   onSelectCustomer: (customer: Customer) => void;
@@ -26,18 +27,21 @@ export const CustomerSelection = ({
   const [newCustomerLocation, setNewCustomerLocation] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Query for customers
   const { data: customers = [], isLoading, error } = useQuery({
-    queryKey: ['customers'],
-    queryFn: customerService.getCustomers,
+    queryKey: ['customers', user?.id],
+    queryFn: () => customerService.getCustomers(user!.id),
+    enabled: !!user?.id
   });
 
   // Mutation for adding customer
   const addCustomerMutation = useMutation({
-    mutationFn: customerService.addCustomer,
+    mutationFn: (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) => 
+      customerService.addCustomer(customerData, user!.id),
     onSuccess: (newCustomer) => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers', user?.id] });
       toast({
         title: "Customer Added",
         description: `${newCustomer.name} has been added successfully.`,
