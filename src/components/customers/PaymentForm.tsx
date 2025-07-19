@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface PaymentFormProps {
   customerName: string;
@@ -15,6 +17,7 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm = ({ customerName, outstandingAmount, onSubmit, onCancel }: PaymentFormProps) => {
+  const { currency } = useSettings();
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +33,7 @@ export const PaymentForm = ({ customerName, outstandingAmount, onSubmit, onCance
     }
     
     if (paymentAmount > outstandingAmount) {
-      setError(`Payment cannot exceed outstanding amount of $${outstandingAmount.toFixed(2)}`);
+      setError(`Payment cannot exceed outstanding amount of ${formatCurrency(outstandingAmount, currency)}`);
       return;
     }
     
@@ -69,7 +72,7 @@ export const PaymentForm = ({ customerName, outstandingAmount, onSubmit, onCance
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Outstanding Amount:</span>
                 <span className="font-semibold text-red-600">
-                  ${outstandingAmount.toFixed(2)}
+                  {formatCurrency(outstandingAmount, currency)}
                 </span>
               </div>
             </div>

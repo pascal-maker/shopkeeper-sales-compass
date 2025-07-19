@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CustomerWithCredit } from "@/types/customer";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface CustomerListProps {
   customers: CustomerWithCredit[];
@@ -11,6 +13,7 @@ interface CustomerListProps {
 }
 
 export const CustomerList = ({ customers, onSelectCustomer }: CustomerListProps) => {
+  const { currency } = useSettings();
   if (customers.length === 0) {
     return (
       <Card className="m-4">
@@ -81,7 +84,7 @@ export const CustomerList = ({ customers, onSelectCustomer }: CustomerListProps)
                           : 'text-green-600'
                       }`}
                     >
-                      ${Math.abs(customer.totalCredit).toFixed(2)}
+                      {formatCurrency(Math.abs(customer.totalCredit), currency)}
                     </span>
                   </div>
                   

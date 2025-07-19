@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { TrendingUp, ShoppingBag, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 type TopProduct = { name: string; sold: number };
 
@@ -19,6 +21,7 @@ function getStartOfWeekUTC() {
 }
 
 export const DailyReportSummary = () => {
+  const { currency } = useSettings();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{
     totalSales: number;
@@ -131,7 +134,7 @@ export const DailyReportSummary = () => {
                 </div>
                 <div>
                   <div className="font-semibold text-green-800">
-                    ${stats.totalSales.toLocaleString()}
+                    {formatCurrency(stats.totalSales, currency)}
                   </div>
                   <div className="text-sm text-green-600">
                     Total Sales Today

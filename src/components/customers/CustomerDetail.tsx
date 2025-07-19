@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Customer, CreditTransaction } from "@/types/customer";
 import { PaymentForm } from "./PaymentForm";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -27,6 +29,7 @@ export const CustomerDetail = ({
   onAddTransaction, 
   onBack 
 }: CustomerDetailProps) => {
+  const { currency } = useSettings();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const sortedTransactions = [...creditTransactions].sort(
@@ -157,7 +160,7 @@ export const CustomerDetail = ({
                     totalCredit > 0 ? 'text-red-600' : 'text-green-600'
                   }`}
                 >
-                  ${Math.abs(totalCredit).toFixed(2)}
+                  {formatCurrency(Math.abs(totalCredit), currency)}
                 </span>
               </div>
               <p className="text-muted-foreground">
@@ -214,7 +217,7 @@ export const CustomerDetail = ({
                           transaction.type === 'sale' ? 'text-red-600' : 'text-green-600'
                         }`}
                       >
-                        {transaction.type === 'sale' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                        {transaction.type === 'sale' ? '+' : '-'}{formatCurrency(transaction.amount, currency)}
                       </span>
                     </div>
                   </div>

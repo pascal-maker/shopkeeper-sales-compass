@@ -115,7 +115,7 @@ export const ProductSelection = ({
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Select Products</h1>
           <Badge variant="outline" className="text-lg px-3 py-1">
-            ${totalAmount}
+            {formatCurrency(totalAmount, currency)}
           </Badge>
         </div>
 
@@ -145,7 +145,7 @@ export const ProductSelection = ({
                         <div>
                           <h3 className="font-semibold text-sm leading-tight line-clamp-2">{product.name}</h3>
                           <div className="flex justify-between items-center mt-1">
-                            <span className="text-primary font-bold text-lg">${product.sellingPrice}</span>
+                            <span className="text-primary font-bold text-lg">{formatCurrency(product.sellingPrice, currency)}</span>
                             <span className="text-xs text-muted-foreground">
                               {product.quantity} {product.unitType || 'pcs'}
                             </span>
@@ -213,7 +213,7 @@ export const ProductSelection = ({
                   <div className="flex-1 min-w-0">
                     <span className="font-medium truncate block">{item.name}</span>
                     <div className="text-xs text-muted-foreground">
-                      {item.quantity} × ${item.price} = ${item.quantity * item.price}
+                      {item.quantity} × {formatCurrency(item.price, currency)} = {formatCurrency(item.quantity * item.price, currency)}
                     </div>
                   </div>
                   <Button
@@ -227,7 +227,7 @@ export const ProductSelection = ({
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between items-center">
-                <span className="font-bold text-lg">Total: ${totalAmount}</span>
+                <span className="font-bold text-lg">Total: {formatCurrency(totalAmount, currency)}</span>
                 <Button onClick={onProceedToPayment} size="lg" className="min-w-[120px]">
                   Continue
                   <ArrowRight className="h-4 w-4 ml-2" />

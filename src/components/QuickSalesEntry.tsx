@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SalesEntry } from "./SalesEntry";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 export const QuickSalesEntry = () => {
+  const { currency } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   
   const topProducts = [
@@ -56,7 +59,7 @@ export const QuickSalesEntry = () => {
                 >
                   <span className="font-medium text-sm">{product.name}</span>
                   <div className="flex justify-between w-full mt-1">
-                    <span className="text-primary font-semibold">${product.price}</span>
+                    <span className="text-primary font-semibold">{formatCurrency(product.price, currency)}</span>
                     <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
                   </div>
                 </Button>

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/types/sales";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface SaleSummaryProps {
   sale: Sale;
@@ -10,6 +12,7 @@ interface SaleSummaryProps {
 }
 
 export const SaleSummary = ({ sale, onNewSale }: SaleSummaryProps) => {
+  const { currency } = useSettings();
   const getPaymentBadgeColor = () => {
     switch (sale.paymentType) {
       case 'cash':
@@ -64,10 +67,10 @@ export const SaleSummary = ({ sale, onNewSale }: SaleSummaryProps) => {
                 <div>
                   <span className="font-medium">{item.name}</span>
                   <div className="text-sm text-muted-foreground">
-                    {item.quantity} × ${item.price}
+                    {item.quantity} × {formatCurrency(item.price, currency)}
                   </div>
                 </div>
-                <span className="font-semibold">${item.quantity * item.price}</span>
+                <span className="font-semibold">{formatCurrency(item.quantity * item.price, currency)}</span>
               </div>
             ))}
           </div>
@@ -76,7 +79,7 @@ export const SaleSummary = ({ sale, onNewSale }: SaleSummaryProps) => {
           <div className="border-t pt-3">
             <div className="flex justify-between items-center">
               <span className="font-bold text-lg">Total Amount</span>
-              <span className="font-bold text-xl text-primary">${sale.total}</span>
+              <span className="font-bold text-xl text-primary">{formatCurrency(sale.total, currency)}</span>
             </div>
           </div>
 
@@ -89,7 +92,7 @@ export const SaleSummary = ({ sale, onNewSale }: SaleSummaryProps) => {
                 <p className="text-sm text-muted-foreground">{sale.customer.phone}</p>
                 {sale.paymentType === 'credit' && (
                   <p className="text-sm text-orange-600 font-medium">
-                    Amount due: ${sale.total}
+                    Amount due: {formatCurrency(sale.total, currency)}
                   </p>
                 )}
               </div>
