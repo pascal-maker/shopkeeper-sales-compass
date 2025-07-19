@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CartItem } from "@/types/sales";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -33,6 +35,7 @@ export const ProductSelection = ({
   totalAmount,
   onProceedToPayment
 }: ProductSelectionProps) => {
+  const { currency } = useSettings();
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
 

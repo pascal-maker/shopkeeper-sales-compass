@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Product } from "../ProductsManager";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -13,18 +15,10 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => {
+  const { currency } = useSettings();
   const isLowStock = product.quantity <= 10;
   const hasExpiry = product.expiryDate;
   const isExpiringSoon = hasExpiry && new Date(product.expiryDate!) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -67,12 +61,12 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <div className="text-muted-foreground text-xs">Selling Price</div>
-                <div className="font-medium">{formatCurrency(product.sellingPrice)}</div>
+                <div className="font-medium">{formatCurrency(product.sellingPrice, currency)}</div>
               </div>
               {product.costPrice && (
                 <div>
                   <div className="text-muted-foreground text-xs">Cost Price</div>
-                  <div className="font-medium">{formatCurrency(product.costPrice)}</div>
+                  <div className="font-medium">{formatCurrency(product.costPrice, currency)}</div>
                 </div>
               )}
             </div>
