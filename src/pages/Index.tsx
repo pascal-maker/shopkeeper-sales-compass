@@ -9,6 +9,7 @@ import { SalesHistory } from "@/components/SalesHistory";
 import { ProductsManager } from "@/components/ProductsManager";
 import { CustomersManager } from "@/components/CustomersManager";
 import ReportsPage from "./ReportsPage";
+import SettingsPage from "./SettingsPage";
 
 const Index = () => {
   const [currentTab, setCurrentTab] = useState("dashboard");
@@ -23,6 +24,8 @@ const Index = () => {
         return <CustomersManager />;
       case "reports":
         return <ReportsPage />;
+      case "settings":
+        return <SettingsPage />;
       case "dashboard":
       default:
         return (
