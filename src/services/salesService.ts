@@ -78,6 +78,9 @@ export const salesService = {
         return { saleId: '', success: false, error: `Inventory validation failed: ${inventoryValidation.errors.join(', ')}` };
       }
 
+      // Get current user ID for RLS
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Save the sale
       const { data: saleData, error: saleError } = await supabase
         .from('sales')
@@ -86,6 +89,7 @@ export const salesService = {
           payment_type: paymentTypeMap[sale.paymentType],
           customer_id: sale.customer?.id || null,
           sale_date: sale.timestamp.toISOString(),
+          user_id: user?.id,
           sync_status: 'synced' as const
         })
         .select()
@@ -120,6 +124,9 @@ export const salesService = {
       if (sale.paymentType === 'credit' && sale.customer) {
         console.log('SalesService: Creating credit transaction for customer:', sale.customer.id);
         
+        // Get current user ID for RLS
+        const { data: { user } } = await supabase.auth.getUser();
+        
         const { error: creditError } = await supabase
           .from('credit_transactions')
           .insert({
@@ -129,6 +136,7 @@ export const salesService = {
             amount: sale.total,
             transaction_date: sale.timestamp.toISOString(),
             notes: `Credit sale - ${sale.items.length} items`,
+            user_id: user?.id,
             sync_status: 'synced' as const
           });
 

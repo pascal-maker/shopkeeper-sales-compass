@@ -91,6 +91,9 @@ export const salesSync = {
           'credit': 'credit' as const
         };
 
+        // Get current user ID for RLS
+        const { data: { user } } = await supabase.auth.getUser();
+
         // Create sale in a transaction to ensure consistency
         const { data: saleData, error: saleError } = await supabase
           .from('sales')
@@ -99,6 +102,7 @@ export const salesSync = {
             payment_type: paymentTypeMap[sale.paymentType],
             customer_id: sale.customer?.id || null,
             sale_date: sale.timestamp.toISOString(),
+            user_id: user?.id,
             sync_status: 'synced'
           })
           .select()
@@ -135,6 +139,9 @@ export const salesSync = {
         if (sale.paymentType === 'credit' && sale.customer) {
           console.log('SalesSync: Creating credit transaction...');
           
+          // Get current user ID for RLS
+          const { data: { user } } = await supabase.auth.getUser();
+          
           const { error: creditError } = await supabase
             .from('credit_transactions')
             .insert({
@@ -144,6 +151,7 @@ export const salesSync = {
               amount: sale.total,
               transaction_date: sale.timestamp.toISOString(),
               notes: `Credit sale - ${sale.items.length} items`,
+              user_id: user?.id,
               sync_status: 'synced'
             });
 
