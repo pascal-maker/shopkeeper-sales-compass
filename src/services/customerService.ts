@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Customer, CreditTransaction } from "@/types/customer";
+import { handleSupabaseError } from "@/utils/errorHandling";
 
 export const customerService = {
   // Customer operations
@@ -14,7 +15,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error fetching customers:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Fetched customers:', data);
@@ -43,7 +45,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error adding customer:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Added customer:', data);
@@ -73,7 +76,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error updating customer:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Updated customer:', data);
@@ -95,7 +99,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error deleting customer:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Deleted customer:', customerId);
@@ -112,7 +117,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error fetching credit transactions:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Fetched credit transactions:', data);
@@ -145,7 +151,8 @@ export const customerService = {
 
     if (error) {
       console.error('CustomerService: Error adding credit transaction:', error);
-      throw error;
+      const safeError = handleSupabaseError(error);
+      throw new Error(safeError.message);
     }
 
     console.log('CustomerService: Added credit transaction:', data);

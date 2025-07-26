@@ -7,6 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Customer } from "@/types/customer";
+import { 
+  validatePhoneNumber, 
+  validateName, 
+  validateLocation, 
+  validateNotes,
+  sanitizeInput,
+  ValidationErrors 
+} from "@/utils/inputValidation";
 
 interface AddCustomerFormProps {
   customer?: Customer;
@@ -28,14 +36,27 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Validate name
     if (!formData.name.trim()) {
-      newErrors.name = 'Customer name is required';
+      newErrors.name = ValidationErrors.REQUIRED_FIELD;
+    } else if (!validateName(formData.name)) {
+      newErrors.name = ValidationErrors.NAME_INVALID;
     }
 
+    // Validate phone
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Please enter a valid 10-digit phone number';
+      newErrors.phone = ValidationErrors.REQUIRED_FIELD;
+    } else if (!validatePhoneNumber(formData.phone)) {
+      newErrors.phone = ValidationErrors.PHONE_INVALID;
+    }
+
+    // Validate optional fields
+    if (formData.location && !validateLocation(formData.location)) {
+      newErrors.location = ValidationErrors.LOCATION_TOO_LONG;
+    }
+
+    if (formData.notes && !validateNotes(formData.notes)) {
+      newErrors.notes = ValidationErrors.NOTES_TOO_LONG;
     }
 
     setErrors(newErrors);
@@ -56,7 +77,10 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Sanitize input to prevent XSS
+    const sanitizedValue = sanitizeInput(value);
+    
+    setFormData(prev => ({ ...prev, [field]: sanitizedValue }));
     
     // Clear error when user starts typing
     if (errors[field]) {
@@ -125,7 +149,11 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
                   value={formData.location}
                   onChange={(e) => handleInputChange('location', e.target.value)}
                   placeholder="e.g., Westlands, Nairobi"
+                  className={errors.location ? 'border-red-500' : ''}
                 />
+                {errors.location && (
+                  <p className="text-sm text-red-500">{errors.location}</p>
+                )}
               </div>
 
               {/* Notes Field */}
@@ -137,7 +165,11 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
                   onChange={(e) => handleInputChange('notes', e.target.value)}
                   placeholder="e.g., Regular customer, prefers cash payments..."
                   rows={3}
+                  className={errors.notes ? 'border-red-500' : ''}
                 />
+                {errors.notes && (
+                  <p className="text-sm text-red-500">{errors.notes}</p>
+                )}
               </div>
 
               {/* Action Buttons */}
