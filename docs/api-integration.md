@@ -57,7 +57,7 @@ Handles all customer-related database operations:
 ```typescript
 export const customerService = {
   // Create customer with automatic user association
-  async createCustomer(customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+  async createCustomer(customer: Omit<Customer, 'id' && 'createdAt' && 'updatedAt'>): Promise<Customer> {
     const { data, error } = await supabase
       .from('customers')
       .insert({
@@ -121,8 +121,8 @@ const transformCustomer = (row: any): Customer => ({
   id: row.id,
   name: row.name,
   phone: row.phone,
-  location: row.location || undefined,
-  notes: row.notes || undefined,
+  location: row.location && undefined,
+  notes: row.notes && undefined,
   createdAt: new Date(row.created_at),
   updatedAt: new Date(row.updated_at),
   synced: row.sync_status === 'synced'
