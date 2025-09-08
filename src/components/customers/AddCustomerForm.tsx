@@ -1,4 +1,19 @@
 
+/**
+ * AddCustomerForm
+ *
+ * Collects customer details (name, phone, optional location and notes),
+ * performs client-side validation and basic XSS sanitization, and emits
+ * a clean payload via onSubmit. Designed to be used for both add and edit flows.
+ *
+ * Improvement suggestions:
+ * - Consider using react-hook-form + zod for form state, validation, and better a11y.
+ * - Phone validation could use libphonenumber-js for locale-aware parsing/formatting.
+ * - Provide aria attributes (aria-invalid, aria-describedby) for screen readers.
+ * - Disable the submit button when invalid or during a pending async submit.
+ * - Debounce or adjust sanitization strategy to avoid surprising keystroke changes; sanitize on submit and escape on render instead.
+ * - Externalize all user-facing strings for i18n.
+ */
 import { useState } from "react";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +31,7 @@ import {
   ValidationErrors 
 } from "@/utils/inputValidation";
 
+/** Props contract for AddCustomerForm */
 interface AddCustomerFormProps {
   customer?: Customer;
   onSubmit: (data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'synced'>) => void;
@@ -24,33 +40,41 @@ interface AddCustomerFormProps {
 }
 
 export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = false }: AddCustomerFormProps) => {
+  // Local, minimal form state. For larger forms, prefer react-hook-form to reduce re-renders
+  // and to centralize validation and error reporting.
   const [formData, setFormData] = useState({
-    name: customer?.name || '',
-    phone: customer?.phone || '',
-    location: customer?.location || '',
-    notes: customer?.notes || ''
+    name: customer?.name ?? '',
+    phone: customer?.phone ?? '',
+    location: customer?.location ?? '',
+    notes: customer?.notes ?? ''
   });
 
+  // Field-level error messages keyed by input name
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  /**
+   * Validate current formData and populate errors map.
+   * Returns true if valid; false otherwise.
+   */
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    // Validate name
+    // Validate name (required + format)
     if (!formData.name.trim()) {
       newErrors.name = ValidationErrors.REQUIRED_FIELD;
     } else if (!validateName(formData.name)) {
       newErrors.name = ValidationErrors.NAME_INVALID;
     }
 
-    // Validate phone
+    // Validate phone (required + basic pattern)
+    // Improvement: adopt libphonenumber-js for robust, locale-aware validation.
     if (!formData.phone.trim()) {
       newErrors.phone = ValidationErrors.REQUIRED_FIELD;
     } else if (!validatePhoneNumber(formData.phone)) {
       newErrors.phone = ValidationErrors.PHONE_INVALID;
     }
 
-    // Validate optional fields
+    // Validate optional fields (length caps)
     if (formData.location && !validateLocation(formData.location)) {
       newErrors.location = ValidationErrors.LOCATION_TOO_LONG;
     }
@@ -63,6 +87,10 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Handle form submission: gate on validation, then emit sanitized/trimmed payload.
+   * Consider disabling the submit button while processing to prevent double submits.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -70,12 +98,16 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
       onSubmit({
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        location: formData.location.trim() || undefined,
-        notes: formData.notes.trim() || undefined
+        location: formData.location.trim() ?? undefined,
+        notes: formData.notes.trim() ?? undefined
       });
     }
   };
 
+  /**
+   * Update field state. We sanitize on every keystroke to reduce XSS risk.
+   * Improvement: sanitize on submit and escape on render to avoid altering user input as they type.
+   */
   const handleInputChange = (field: string, value: string) => {
     // Sanitize input to prevent XSS
     const sanitizedValue = sanitizeInput(value);
@@ -113,6 +145,7 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
               {/* Name Field */}
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name *</Label>
+                {/* Improvement: add aria-invalid/aria-describedby when errors.name is present */}
                 <Input
                   id="name"
                   value={formData.name}
@@ -128,6 +161,7 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
               {/* Phone Field */}
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number *</Label>
+                {/* Improvement: use inputMode="tel" and pattern or a phone input library */}
                 <Input
                   id="phone"
                   type="tel"
@@ -159,6 +193,7 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
               {/* Notes Field */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes (Optional)</Label>
+                {/* Improvement: consider a character counter for notes length */}
                 <Textarea
                   id="notes"
                   value={formData.notes}
@@ -178,6 +213,7 @@ export const AddCustomerForm = ({ customer, onSubmit, onCancel, isEditing = fals
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
+                {/* Improvement: disable when invalid or during pending save */}
                 <Button type="submit" className="flex-1">
                   <Save className="h-4 w-4 mr-2" />
                   {isEditing ? 'Update' : 'Save'} Customer

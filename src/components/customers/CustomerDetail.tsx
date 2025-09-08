@@ -1,5 +1,18 @@
 
-import { useState } from "react";
+/**
+ * CustomerDetail
+ *
+ * Displays a customer's profile, credit status, and transaction history.
+ * Allows editing, deletion (with confirm), and recording payments.
+ *
+ * Improvement ideas:
+ * - Memoize derived data like sorted transactions (useMemo) to avoid re-sorts on each render.
+ * - Add loading/empty/sync states at the component boundary, not just inside the list.
+ * - Enhance a11y: heading semantics, aria-live for updates, button labels, and focus management when PaymentForm opens.
+ * - Consider virtualization if transaction history can be large.
+ * - Consider server-side/React Query mutation for payment submission with optimistic updates.
+ */
+import { useMemo, useState } from "react";
 import { ArrowLeft, Edit, Trash2, Plus, DollarSign, Calendar, MapPin, Phone, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +23,7 @@ import { PaymentForm } from "./PaymentForm";
 import { useSettings } from "@/contexts/SettingsContext";
 import { formatCurrency } from "@/lib/utils";
 
+/** Props contract for CustomerDetail */
 interface CustomerDetailProps {
   customer: Customer;
   creditTransactions: CreditTransaction[];
@@ -32,10 +46,14 @@ export const CustomerDetail = ({
   const { currency } = useSettings();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  const sortedTransactions = [...creditTransactions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  // Memoize to prevent resorting on every render
+  const sortedTransactions = useMemo(() => {
+    return [...creditTransactions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, [creditTransactions]);
 
+  // Localized short date for display
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -44,6 +62,7 @@ export const CustomerDetail = ({
     });
   };
 
+  // Bubble up a payment transaction; consider optimistic update + server mutation
   const handlePaymentSubmit = (amount: number, notes?: string) => {
     onAddTransaction({
       customerId: customer.id,
@@ -64,16 +83,19 @@ export const CustomerDetail = ({
             <Button variant="ghost" size="icon" onClick={onBack}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
+            {/* Improvement: ensure this is the page's main heading (h1) in context */}
             <h1 className="text-xl font-semibold">{customer.name}</h1>
           </div>
           
           <div className="flex gap-2">
+            {/* Improvement: add aria-label (e.g., aria-label="Edit customer") */}
             <Button variant="outline" size="icon" onClick={onEdit}>
               <Edit className="h-4 w-4" />
             </Button>
             
             <AlertDialog>
               <AlertDialogTrigger asChild>
+                {/* Improvement: add aria-label and role description */}
                 <Button variant="outline" size="icon">
                   <Trash2 className="h-4 w-4" />
                 </Button>

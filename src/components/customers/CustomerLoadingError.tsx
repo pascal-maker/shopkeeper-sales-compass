@@ -7,7 +7,7 @@ interface CustomerLoadingErrorProps {
   onRetry: () => void;
 }
 
-export const CustomerLoadingError = ({ isLoading, error, onRetry }: CustomerLoadingErrorProps) => {
+export function CustomerLoadingError({ isLoading, error, onRetry }: CustomerLoadingErrorProps) {
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -33,4 +33,4 @@ export const CustomerLoadingError = ({ isLoading, error, onRetry }: CustomerLoad
   }
 
   return null;
-};
+}
