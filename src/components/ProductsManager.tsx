@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductsManagerHeader } from "./products/ProductsManagerHeader";
 import { ProductsSearchBar } from "./products/ProductsSearchBar";
 import { ProductStatsCards } from "./products/ProductStatsCards";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export interface Product {
   id: string;
@@ -27,6 +28,7 @@ export interface Product {
 }
 
 export const ProductsManager = () => {
+  const { t } = useSettings();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
@@ -152,7 +154,7 @@ export const ProductsManager = () => {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Loading products...</p>
+          <p className="text-muted-foreground">{t('loading')} {t('products').toLowerCase()}...</p>
         </div>
       </div>
     );

@@ -21,7 +21,7 @@ function getStartOfWeekUTC() {
 }
 
 export const DailyReportSummary = () => {
-  const { currency } = useSettings();
+  const { currency, t } = useSettings();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{
     totalSales: number;
@@ -115,15 +115,15 @@ export const DailyReportSummary = () => {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-green-600" />
-          Insight
+          {t('todayOverview')}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="text-center py-10 text-muted-foreground">Loading Insight...</div>
+          <div className="text-center py-10 text-muted-foreground">{t('loading')}</div>
         ) : error ? (
-          <div className="text-center py-10 text-red-600">Failed to load: {error}</div>
+          <div className="text-center py-10 text-red-600">{t('error')}: {error}</div>
         ) : (
           <div className="space-y-3">
             {/* Total Sales Today */}
@@ -137,7 +137,7 @@ export const DailyReportSummary = () => {
                     {formatCurrency(stats.totalSales, currency)}
                   </div>
                   <div className="text-sm text-green-600">
-                    Total Sales Today
+                    {t('totalSales')}
                   </div>
                 </div>
               </div>
@@ -151,7 +151,7 @@ export const DailyReportSummary = () => {
                 <div>
                   <div className="font-semibold text-blue-800">{stats.transactions}</div>
                   <div className="text-sm text-blue-600">
-                    Transactions Today
+                    {t('transactionsToday')}
                   </div>
                 </div>
               </div>
@@ -159,7 +159,7 @@ export const DailyReportSummary = () => {
             {/* Top 3 Selling Products */}
             <div className="p-3 bg-muted/30 rounded-lg">
               <div className="text-sm text-muted-foreground mb-1">
-                Top 3 Selling Products This Week
+                {t('topSellingProducts')}
               </div>
               {stats.topProducts.length > 0 ? (
                 <ol className="space-y-1">
@@ -173,7 +173,7 @@ export const DailyReportSummary = () => {
                   ))}
                 </ol>
               ) : (
-                <div className="text-sm italic text-muted-foreground">No sales this week.</div>
+                <div className="text-sm italic text-muted-foreground">{t('noSalesThisWeek')}</div>
               )}
             </div>
           </div>

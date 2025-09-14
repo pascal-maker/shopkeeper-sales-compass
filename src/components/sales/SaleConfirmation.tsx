@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CartItem } from "@/types/sales";
 import { Customer } from "@/types/customer";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface SaleConfirmationProps {
   cart: CartItem[];
@@ -22,6 +24,7 @@ export const SaleConfirmation = ({
   onConfirm,
   onBack
 }: SaleConfirmationProps) => {
+  const { currency } = useSettings();
   console.log('SaleConfirmation - Payment Type:', paymentType);
   console.log('SaleConfirmation - Customer:', customer);
   console.log('SaleConfirmation - Cart:', cart);
@@ -84,17 +87,17 @@ export const SaleConfirmation = ({
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm truncate">{item.name}</h4>
                     <p className="text-xs text-muted-foreground">
-                      {item.quantity} × ${item.price}
+                      {item.quantity} × {formatCurrency(item.price, currency)}
                     </p>
                   </div>
                   <div className="text-right ml-2">
-                    <p className="font-semibold text-sm">${item.quantity * item.price}</p>
+                    <p className="font-semibold text-sm">{formatCurrency(item.quantity * item.price, currency)}</p>
                   </div>
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between items-center">
                 <span className="font-bold">Total</span>
-                <span className="font-bold text-primary">${totalAmount}</span>
+                <span className="font-bold text-primary">{formatCurrency(totalAmount, currency)}</span>
               </div>
             </CardContent>
           </Card>
@@ -137,7 +140,7 @@ export const SaleConfirmation = ({
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="p-3">
                 <p className="text-orange-800 text-sm">
-                  ⚠️ This is a credit sale. The customer owes ${totalAmount} and should pay later.
+                  ⚠️ This is a credit sale. The customer owes {formatCurrency(totalAmount, currency)} and should pay later.
                 </p>
               </CardContent>
             </Card>

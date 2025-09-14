@@ -4,6 +4,8 @@ import { ArrowLeft, Banknote, Smartphone, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface PaymentSelectionProps {
   totalAmount: number;
@@ -16,6 +18,7 @@ export const PaymentSelection = ({
   onSelectPayment,
   onBack
 }: PaymentSelectionProps) => {
+  const { currency } = useSettings();
   const [selectedPayment, setSelectedPayment] = useState<'cash' | 'mobile-money' | 'credit'>('cash');
 
   const paymentOptions = [
@@ -50,7 +53,7 @@ export const PaymentSelection = ({
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Select Payment</h1>
-          <p className="text-muted-foreground">Total: ${totalAmount}</p>
+          <p className="text-muted-foreground">Total: {formatCurrency(totalAmount, currency)}</p>
         </div>
       </div>
 

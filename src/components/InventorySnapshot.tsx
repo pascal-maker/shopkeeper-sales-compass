@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Package, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface Product {
   id: string;
@@ -19,6 +20,7 @@ interface Product {
 }
 
 export const InventorySnapshot = () => {
+  const { t } = useSettings();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,7 @@ export const InventorySnapshot = () => {
     try {
       const storedProducts = localStorage.getItem('products');
       if (storedProducts) {
-        const parsedProducts = JSON.parse(storedProducts).map((product: any) => ({
+        const parsedProducts = JSON.parse(storedProducts).map((product: Product) => ({
           ...product,
           createdAt: new Date(product.createdAt),
           updatedAt: new Date(product.updatedAt)
@@ -78,11 +80,11 @@ export const InventorySnapshot = () => {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Package className="h-5 w-5 text-blue-600" />
-            Inventory
+            {t('inventory')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center text-muted-foreground">Loading...</div>
+          <div className="text-center text-muted-foreground">{t('loading')}</div>
         </CardContent>
       </Card>
     );
@@ -93,7 +95,7 @@ export const InventorySnapshot = () => {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Package className="h-5 w-5 text-blue-600" />
-          Inventory
+          {t('inventory')}
         </CardTitle>
       </CardHeader>
       
@@ -101,11 +103,11 @@ export const InventorySnapshot = () => {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 bg-muted/30 rounded-lg">
             <div className="text-2xl font-bold text-foreground">{totalProducts}</div>
-            <div className="text-sm text-muted-foreground">Total Products</div>
+            <div className="text-sm text-muted-foreground">{t('products')}</div>
           </div>
           <div className="text-center p-3 bg-destructive/10 rounded-lg">
             <div className="text-2xl font-bold text-destructive">{lowStockCount}</div>
-            <div className="text-sm text-muted-foreground">Low Stock</div>
+            <div className="text-sm text-muted-foreground">{t('lowStock')}</div>
           </div>
         </div>
 
@@ -113,19 +115,19 @@ export const InventorySnapshot = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium">Needs Restocking</span>
+              <span className="text-sm font-medium">{t('needsRestocking')}</span>
             </div>
             {lowStockItems.slice(0, 5).map((item) => (
               <div key={item.id} className="flex justify-between items-center p-2 bg-destructive/5 rounded border-l-2 border-destructive">
                 <span className="text-sm font-medium">{item.name}</span>
                 <Badge variant="destructive" className="text-xs">
-                  {item.quantity} {item.unitType || 'pcs'} left
+                  {item.quantity} {item.unitType || 'pcs'} {t('left')}
                 </Badge>
               </div>
             ))}
             {lowStockItems.length > 5 && (
               <div className="text-xs text-muted-foreground text-center">
-                +{lowStockItems.length - 5} more items need restocking
+                +{lowStockItems.length - 5} {t('moreItemsNeedRestocking')}
               </div>
             )}
           </div>
@@ -134,7 +136,7 @@ export const InventorySnapshot = () => {
         {totalProducts === 0 && (
           <div className="text-center py-4">
             <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No products in inventory</p>
+            <p className="text-sm text-muted-foreground">{t('noProducts')}</p>
           </div>
         )}
       </CardContent>

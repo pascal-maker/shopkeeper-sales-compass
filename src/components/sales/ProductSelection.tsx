@@ -35,7 +35,7 @@ export const ProductSelection = ({
   totalAmount,
   onProceedToPayment
 }: ProductSelectionProps) => {
-  const { currency } = useSettings();
+  const { currency, t } = useSettings();
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -90,17 +90,17 @@ export const ProductSelection = ({
     return (
       <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Select Products</h1>
+          <h1 className="text-2xl font-bold">{t('selectProducts')}</h1>
         </div>
         
         <Card>
           <CardContent className="p-8 text-center">
-            <h3 className="text-lg font-medium mb-2">No products available</h3>
+            <h3 className="text-lg font-medium mb-2">{t('noProductsFound')}</h3>
             <p className="text-muted-foreground mb-4">
-              Add products to your inventory first before recording sales
+              {t('addProductsFirst')}
             </p>
             <Button onClick={() => window.dispatchEvent(new CustomEvent('switchToProducts'))}>
-              Go to Products
+              {t('goToProducts')}
             </Button>
           </CardContent>
         </Card>
@@ -113,7 +113,7 @@ export const ProductSelection = ({
       {/* Fixed Header */}
       <div className="flex-shrink-0 p-4 border-b bg-background">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Select Products</h1>
+          <h1 className="text-2xl font-bold">{t('selectProducts')}</h1>
           <Badge variant="outline" className="text-lg px-3 py-1">
             {formatCurrency(totalAmount, currency)}
           </Badge>
@@ -123,7 +123,7 @@ export const ProductSelection = ({
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder={t('searchProducts')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 h-12 text-lg"
@@ -185,7 +185,7 @@ export const ProductSelection = ({
                             disabled={product.quantity === 0}
                           >
                             <Plus className="h-3 w-3 mr-1" />
-                            Add
+                            {t('add')}
                           </Button>
                         )}
                       </div>
@@ -205,7 +205,7 @@ export const ProductSelection = ({
         <div className="flex-shrink-0 border-t bg-background">
           <Card className="bg-primary/5 border-primary/20 rounded-none border-x-0 border-b-0">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Cart ({cart.length} items)</CardTitle>
+              <CardTitle className="text-base">{t('cart')} ({cart.length} {t('items')})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 max-h-32 overflow-y-auto">
               {cart.map((item) => (
@@ -222,14 +222,14 @@ export const ProductSelection = ({
                     onClick={() => onRemoveFromCart(item.id)}
                     className="text-destructive hover:text-destructive ml-2 flex-shrink-0"
                   >
-                    Remove
+                    {t('remove')}
                   </Button>
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between items-center">
-                <span className="font-bold text-lg">Total: {formatCurrency(totalAmount, currency)}</span>
+                <span className="font-bold text-lg">{t('total')}: {formatCurrency(totalAmount, currency)}</span>
                 <Button onClick={onProceedToPayment} size="lg" className="min-w-[120px]">
-                  Continue
+                  {t('continue')}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>

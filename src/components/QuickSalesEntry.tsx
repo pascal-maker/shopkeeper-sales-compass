@@ -9,7 +9,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { formatCurrency } from "@/lib/utils";
 
 export const QuickSalesEntry = () => {
-  const { currency } = useSettings();
+  const { currency, t } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   
   const topProducts = [
@@ -26,7 +26,7 @@ export const QuickSalesEntry = () => {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold">
-              Sale
+              {t('newSale')}
             </CardTitle>
           </div>
         </CardHeader>
@@ -39,7 +39,7 @@ export const QuickSalesEntry = () => {
                 size="lg"
               >
                 <Plus className="h-5 w-5 mr-2" />
-                Start New Sale
+                {t('newSale')}
               </Button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-[100vh] p-0">
@@ -48,7 +48,7 @@ export const QuickSalesEntry = () => {
           </Sheet>
           
           <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-3">Quick Add Products</h4>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">{t('quickAddProducts')}</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {topProducts.map((product) => (
                 <Button
@@ -60,7 +60,7 @@ export const QuickSalesEntry = () => {
                   <span className="font-medium text-sm">{product.name}</span>
                   <div className="flex justify-between w-full mt-1">
                     <span className="text-primary font-semibold">{formatCurrency(product.price, currency)}</span>
-                    <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+                    <span className="text-xs text-muted-foreground">{t('stock')}: {product.stock}</span>
                   </div>
                 </Button>
               ))}

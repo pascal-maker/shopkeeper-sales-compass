@@ -3,10 +3,13 @@ import { Menu, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export const DashboardHeader = () => {
   const { profile } = useAuth();
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const { language, t } = useSettings();
+  
+  const currentDate = new Date().toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -21,7 +24,7 @@ export const DashboardHeader = () => {
             <Menu className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Stock & Sales</h1>
+            <h1 className="text-xl font-bold text-foreground">{t('stockAndSales')}</h1>
             <p className="text-sm text-muted-foreground">{currentDate}</p>
             {profile?.business_name && (
               <p className="text-xs text-muted-foreground">{profile.business_name}</p>

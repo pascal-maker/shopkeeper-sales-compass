@@ -88,16 +88,29 @@ export const AuthPage = () => {
       );
       
       if (error) {
+        console.error('Signup error:', error);
         if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Password should be at least')) {
+          setError('Password must be at least 6 characters long.');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.');
         } else {
-          setError(error.message);
+          setError(`Signup failed: ${error.message}`);
         }
       } else {
         setError('');
         alert('Account created successfully! Please check your email for verification.');
+        // Clear the form
+        setSignUpData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          fullName: ''
+        });
       }
     } catch (err) {
+      console.error('Unexpected signup error:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

@@ -15,7 +15,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => {
-  const { currency } = useSettings();
+  const { currency, t } = useSettings();
   const isLowStock = product.quantity <= 10;
   const hasExpiry = product.expiryDate;
   const isExpiringSoon = hasExpiry && new Date(product.expiryDate!) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -51,7 +51,7 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
                   {isExpiringSoon && (
                     <Badge variant="destructive" className="text-xs">
                       <AlertTriangle className="h-3 w-3 mr-1" />
-                      Expiring
+                      {t('expiring')}
                     </Badge>
                   )}
                 </div>
@@ -60,12 +60,12 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <div className="text-muted-foreground text-xs">Selling Price</div>
+                <div className="text-muted-foreground text-xs">{t('sellingPrice')}</div>
                 <div className="font-medium">{formatCurrency(product.sellingPrice, currency)}</div>
               </div>
               {product.costPrice && (
                 <div>
-                  <div className="text-muted-foreground text-xs">Cost Price</div>
+                  <div className="text-muted-foreground text-xs">{t('costPrice')}</div>
                   <div className="font-medium">{formatCurrency(product.costPrice, currency)}</div>
                 </div>
               )}
@@ -80,7 +80,7 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
                 )}
                 {product.expiryDate && (
                   <div className="text-xs text-muted-foreground">
-                    Expires: {formatDate(product.expiryDate)}
+                    {t('expires')}: {formatDate(product.expiryDate)}
                   </div>
                 )}
               </div>
@@ -89,7 +89,7 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
             {isLowStock && (
               <div className="mt-2 flex items-center gap-1 text-orange-600">
                 <AlertTriangle className="h-3 w-3" />
-                <span className="text-xs font-medium">Low Stock Alert</span>
+                <span className="text-xs font-medium">{t('lowStockAlert')}</span>
               </div>
             )}
           </div>
@@ -103,14 +103,14 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
             <DropdownMenuContent align="end" className="bg-background border shadow-lg">
               <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
-                Edit
+                {t('edit')}
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={onDelete} 
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

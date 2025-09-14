@@ -1,9 +1,11 @@
 
-import { User, ShoppingCart, BadgeDollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { User, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sale } from "@/types/sales";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface SalesListWithPaginationProps {
   paginatedSales: (Sale & { id: number; synced: boolean })[];
@@ -24,10 +26,11 @@ export const SalesListWithPagination: React.FC<SalesListWithPaginationProps> = (
   getPaymentBadgeColor,
   getPaymentLabel,
 }) => {
+  const { t, currency } = useSettings();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
+        <CardTitle>{t('recentSales')}</CardTitle>
       </CardHeader>
       <CardContent>
         {filteredSalesLength === 0 ? (
@@ -35,8 +38,8 @@ export const SalesListWithPagination: React.FC<SalesListWithPaginationProps> = (
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <ShoppingCart className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No sales in this period</h3>
-            <p className="text-muted-foreground">Change your filter or start making sales to see them here</p>
+            <h3 className="text-lg font-medium mb-2">{t('noSalesInPeriod')}</h3>
+            <p className="text-muted-foreground">{t('changeFilterOrStartSales')}</p>
           </div>
         ) : (
           <>
@@ -61,7 +64,7 @@ export const SalesListWithPagination: React.FC<SalesListWithPaginationProps> = (
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">${sale.total}</p>
+                      <p className="text-2xl font-bold text-primary">{formatCurrency(sale.total, currency)}</p>
                       <p className="text-sm text-muted-foreground">
                         {sale.items.length} item{sale.items.length !== 1 ? 's' : ''}
                       </p>
@@ -80,7 +83,7 @@ export const SalesListWithPagination: React.FC<SalesListWithPaginationProps> = (
                     {sale.items.map((item, index) => (
                       <div key={index} className="flex justify-between text-sm">
                         <span>{item.quantity}× {item.name}</span>
-                        <span>${item.quantity * item.price}</span>
+                        <span>{formatCurrency(item.quantity * item.price, currency)}</span>
                       </div>
                     ))}
                   </div>

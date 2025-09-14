@@ -103,10 +103,10 @@ export class NetworkRetryService {
       // Simple connectivity test using Supabase
       const response = await this.executeWithRetry(
         async () => {
-          const response = await fetch('https://fxsszxmtbugbjsxhpwkt.supabase.co/rest/v1/', {
+          const response = await fetch('https://zvoepeizkqhzsdeldocm.supabase.co/rest/v1/', {
             method: 'HEAD',
             headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4c3N6eG10YnVnYmpzeGhwd2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTcwMjAsImV4cCI6MjA2NTQ5MzAyMH0.WpZ_FIVIw7XgwrYO5cy_40cEa9poJNR2USKXjrmxrFM'
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2b2VwZWl6a3FoenNkZWxkb2NtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NzA3NDgsImV4cCI6MjA3MzQ0Njc0OH0.b8LdBCxW28_T-q6ye8vnqOCWTMBepEJZ4X7qHwYX21k'
             }
           });
           

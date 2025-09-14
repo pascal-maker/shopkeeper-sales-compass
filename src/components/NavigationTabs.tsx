@@ -1,6 +1,7 @@
 
 import { Home, Package, ShoppingCart, Users, BarChart3, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface NavigationTabsProps {
   currentTab: string;
@@ -8,13 +9,15 @@ interface NavigationTabsProps {
 }
 
 export const NavigationTabs = ({ currentTab, onTabChange }: NavigationTabsProps) => {
+  const { t } = useSettings();
+  
   const tabs = [
-    { id: "dashboard", label: "Home", icon: Home },
-    { id: "products", label: "Products", icon: Package },
-    { id: "sales", label: "Sales", icon: ShoppingCart },
-    { id: "customers", label: "Customers", icon: Users },
-    { id: "reports", label: "Reports", icon: BarChart3 },
-    { id: "settings", label: "Settings", icon: Settings }
+    { id: "dashboard", label: t('dashboard'), icon: Home },
+    { id: "products", label: t('products'), icon: Package },
+    { id: "sales", label: t('sales'), icon: ShoppingCart },
+    { id: "customers", label: t('customers'), icon: Users },
+    { id: "reports", label: t('reports'), icon: BarChart3 },
+    { id: "settings", label: t('settings'), icon: Settings }
   ];
 
   return (

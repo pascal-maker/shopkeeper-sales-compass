@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AddProductForm } from "./AddProductForm";
 import { BatchProductEntry } from "./BatchProductEntry";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface ProductsManagerHeaderProps {
   isAddFormOpen: boolean;
@@ -21,20 +22,23 @@ export const ProductsManagerHeader = ({
   setIsBatchFormOpen,
   addProduct,
   addMultipleProducts,
-}: ProductsManagerHeaderProps) => (
-  <div className="flex items-center justify-between mb-4">
-    <h1 className="text-2xl font-bold">Products</h1>
+}: ProductsManagerHeaderProps) => {
+  const { t } = useSettings();
+  
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h1 className="text-2xl font-bold">{t('products')}</h1>
     <div className="flex gap-2">
       <Sheet open={isAddFormOpen} onOpenChange={setIsAddFormOpen}>
         <SheetTrigger asChild>
           <Button size="sm">
             <Plus className="h-4 w-4 mr-1" />
-            Add
+            {t('add')}
           </Button>
         </SheetTrigger>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Add New Product</SheetTitle>
+            <SheetTitle>{t('addNewProduct')}</SheetTitle>
           </SheetHeader>
           <AddProductForm
             onSubmit={(productData) => {
@@ -49,12 +53,12 @@ export const ProductsManagerHeader = ({
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-1" />
-            Batch
+            {t('batch')}
           </Button>
         </SheetTrigger>
         <SheetContent className="w-full max-w-none">
           <SheetHeader>
-            <SheetTitle>Add Multiple Products</SheetTitle>
+            <SheetTitle>{t('addMultipleProducts')}</SheetTitle>
           </SheetHeader>
           <BatchProductEntry
             onSubmit={(productsData) => {
@@ -67,5 +71,6 @@ export const ProductsManagerHeader = ({
       </Sheet>
     </div>
   </div>
-);
+  );
+};
 

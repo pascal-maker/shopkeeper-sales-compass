@@ -12,7 +12,7 @@ export function formatCurrency(amount: number, currency: Currency): string {
     GNF: { symbol: 'GNF', locale: 'fr-GN' },
     XOF: { symbol: 'CFA', locale: 'fr-BF' },
     USD: { symbol: '$', locale: 'en-US' },
-    EUR: { symbol: '€', locale: 'en-EU' }
+    EUR: { symbol: '€', locale: 'en-DE' }
   };
 
   const config = currencyMap[currency];

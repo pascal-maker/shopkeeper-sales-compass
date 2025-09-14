@@ -2,6 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar as DateCalendar } from "@/components/ui/calendar";
+import { useSettings } from "@/contexts/SettingsContext";
 
 interface SalesHistoryFiltersProps {
   filterType: "week" | "month" | "custom";
@@ -20,6 +21,7 @@ export const SalesHistoryFilters: React.FC<SalesHistoryFiltersProps> = ({
   dateRange,
   filteredLength,
 }) => {
+  const { t } = useSettings();
   return (
     <Card>
       <CardContent className="py-4 flex flex-col md:flex-row md:items-center gap-4">
@@ -29,33 +31,33 @@ export const SalesHistoryFilters: React.FC<SalesHistoryFiltersProps> = ({
             size="sm"
             onClick={() => setFilterType("week")}
           >
-            This Week
+            {t('thisWeek')}
           </Button>
           <Button
             variant={filterType === "month" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("month")}
           >
-            This Month
+            {t('thisMonth')}
           </Button>
           <Button
             variant={filterType === "custom" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilterType("custom")}
           >
-            Custom
+            {t('custom')}
           </Button>
         </div>
         {filterType === "custom" && (
           <div className="flex flex-col md:flex-row md:items-center gap-2">
-            <span className="text-sm text-muted-foreground">From</span>
+            <span className="text-sm text-muted-foreground">{t('from')}</span>
             <DateCalendar
               mode="single"
               selected={customRange.from}
               onSelect={date => setCustomRange(r => ({ ...r, from: date ?? undefined }))}
               className="w-fit"
             />
-            <span className="text-sm text-muted-foreground">To</span>
+            <span className="text-sm text-muted-foreground">{t('to')}</span>
             <DateCalendar
               mode="single"
               selected={customRange.to}
@@ -65,11 +67,11 @@ export const SalesHistoryFilters: React.FC<SalesHistoryFiltersProps> = ({
           </div>
         )}
         <div className="ml-auto flex items-center text-xs text-muted-foreground">
-          Showing {filteredLength} sale{filteredLength !== 1 && "s"} from{" "}
+          {t('showing')} {filteredLength} {filteredLength !== 1 ? t('sales') : t('sale')} {t('from')}{" "}
           <span className="ml-1 font-medium">
             {dateRange.from.toLocaleDateString()}
           </span>{" "}
-          to{" "}
+          {t('to')}{" "}
           <span className="ml-1 font-medium">
             {dateRange.to.toLocaleDateString()}
           </span>

@@ -69,9 +69,10 @@ export const productEnsureSync = {
 
     for (const item of saleItems) {
       try {
-        const supabaseProductId = productMap.get(item.product_id);
+        // The item.product_id is already the Supabase product ID
+        const supabaseProductId = item.product_id;
         if (!supabaseProductId) {
-          errors.push(`Product mapping not found for item: ${item.product_id}`);
+          errors.push(`Product ID not found for item: ${item.product_id}`);
           continue;
         }
 

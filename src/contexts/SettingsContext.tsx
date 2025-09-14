@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { translations, TranslationKey, Language as TranslationLanguage } from '@/lib/translations';
 
 export type Language = 'en' | 'fr';
 export type Currency = 'SLL' | 'GNF' | 'XOF' | 'USD' | 'EUR';
@@ -8,6 +9,7 @@ interface SettingsContextType {
   currency: Currency;
   setLanguage: (language: Language) => void;
   setCurrency: (currency: Currency) => void;
+  t: (key: TranslationKey) => string;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -26,7 +28,7 @@ interface SettingsProviderProps {
 
 export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   const [language, setLanguage] = useState<Language>('en');
-  const [currency, setCurrency] = useState<Currency>('USD');
+  const [currency, setCurrency] = useState<Currency>('EUR');
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -54,6 +56,11 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
     localStorage.setItem('app-currency', newCurrency);
   };
 
+  // Translation function
+  const t = (key: TranslationKey): string => {
+    return translations[language as TranslationLanguage][key] || key;
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -61,6 +68,7 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
         currency,
         setLanguage: handleLanguageChange,
         setCurrency: handleCurrencyChange,
+        t,
       }}
     >
       {children}

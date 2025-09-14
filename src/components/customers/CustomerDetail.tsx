@@ -43,7 +43,7 @@ export const CustomerDetail = ({
   onAddTransaction, 
   onBack 
 }: CustomerDetailProps) => {
-  const { currency } = useSettings();
+  const { currency, t } = useSettings();
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   // Memoize to prevent resorting on every render
@@ -61,6 +61,28 @@ export const CustomerDetail = ({
       year: 'numeric'
     });
   };
+
+  /**
+ * CustomerDetail props and setup
+ *
+ * Props:
+ * - customer: the current customer's profile info
+ * - creditTransactions: list of that customer's credit-related transactions
+ * - totalCredit: total outstanding credit (positive => owes, zero => none)
+ * - onEdit(): open edit flow for the customer
+ * - onDelete(): delete the customer (confirm is handled in UI)
+ * - onAddTransaction(tx): add a new transaction (e.g., payment)
+ * - onBack(): navigate back to previous view
+ *
+ * State:
+ * - showPaymentForm: toggles the payment form modal
+ *
+ * Derived data:
+ * - sortedTransactions: memoized newest-first by date to avoid re-sorting on every render
+ *
+ * Helpers:
+ * - formatDate(date): localized short date string for display
+ */
 
   // Bubble up a payment transaction; consider optimistic update + server mutation
   const handlePaymentSubmit = (amount: number, notes?: string) => {
@@ -102,15 +124,15 @@ export const CustomerDetail = ({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+                  <AlertDialogTitle>{t('deleteCustomer')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete "{customer.name}"? This will also remove all credit transactions. This action cannot be undone.
+                    {t('deleteCustomerConfirm').replace('{name}', customer.name)}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Delete
+                    {t('delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -125,10 +147,10 @@ export const CustomerDetail = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Customer Information
+              {t('customerInformation')}
               {!customer.synced && (
                 <Badge variant="outline" className="text-xs">
-                  Not Synced
+                  {t('notSynced')}
                 </Badge>
               )}
             </CardTitle>
@@ -155,7 +177,7 @@ export const CustomerDetail = ({
             
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Added {formatDate(customer.createdAt)}</span>
+              <span>{t('added')} {formatDate(customer.createdAt)}</span>
             </div>
           </CardContent>
         </Card>
@@ -164,11 +186,11 @@ export const CustomerDetail = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Credit Status
+              {t('creditStatus')}
               {totalCredit > 0 && (
                 <Button onClick={() => setShowPaymentForm(true)} size="sm">
                   <Plus className="h-4 w-4 mr-1" />
-                  Record Payment
+                  {t('recordPayment')}
                 </Button>
               )}
             </CardTitle>
@@ -186,7 +208,7 @@ export const CustomerDetail = ({
                 </span>
               </div>
               <p className="text-muted-foreground">
-                {totalCredit > 0 ? 'Outstanding Credit' : 'No Outstanding Credit'}
+                {totalCredit > 0 ? t('outstandingCredit') : t('noOutstandingCredit')}
               </p>
             </div>
           </CardContent>
@@ -195,12 +217,12 @@ export const CustomerDetail = ({
         {/* Transaction History */}
         <Card>
           <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
+            <CardTitle>{t('transactionHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             {sortedTransactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No transactions yet</p>
+                <p>{t('noTransactionsYet')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -215,11 +237,11 @@ export const CustomerDetail = ({
                           variant={transaction.type === 'sale' ? 'destructive' : 'default'}
                           className="text-xs"
                         >
-                          {transaction.type === 'sale' ? 'Credit Sale' : 'Payment'}
+                          {transaction.type === 'sale' ? t('creditSale') : t('payment')}
                         </Badge>
                         {!transaction.synced && (
                           <Badge variant="outline" className="text-xs">
-                            Not Synced
+                            {t('notSynced')}
                           </Badge>
                         )}
                       </div>
@@ -261,4 +283,11 @@ export const CustomerDetail = ({
       )}
     </div>
   );
+  // Payment Form Modal
+// - Renders PaymentForm as a modal when showPaymentForm is true
+// - Passes:
+//   • customerName: for display context in the form header
+//   • outstandingAmount: used to show/validate remaining balance
+//   • onSubmit: handles successful payment submission (adds a transaction)
+//   • onCancel: closes the modal by setting showPaymentForm to false
 };

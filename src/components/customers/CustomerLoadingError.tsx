@@ -5,7 +5,7 @@ interface CustomerLoadingErrorProps {
   isLoading: boolean;
   error: Error | null;
   onRetry: () => void;
-}
+}//justcustomerinterfacetrueorfalseonretryreturnsnothing
 
 export function CustomerLoadingError({ isLoading, error, onRetry }: CustomerLoadingErrorProps) {
   if (isLoading) {

@@ -2,6 +2,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Receipt, ShoppingCart, Calendar } from "lucide-react";
 import { Sale } from "@/types/sales";
+import { useSettings } from "@/contexts/SettingsContext";
+import { formatCurrency } from "@/lib/utils";
 
 interface SalesHistorySummaryCardsProps {
   filteredSales: (Sale & { id: number; synced: boolean })[];
@@ -10,6 +12,7 @@ interface SalesHistorySummaryCardsProps {
 export const SalesHistorySummaryCards: React.FC<SalesHistorySummaryCardsProps> = ({
   filteredSales,
 }) => {
+  const { t, currency } = useSettings();
   const getTotalRevenue = () => {
     return filteredSales.reduce((total, sale) => total + sale.total, 0);
   };
@@ -23,7 +26,7 @@ export const SalesHistorySummaryCards: React.FC<SalesHistorySummaryCardsProps> =
               <Receipt className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Sales in Period</p>
+              <p className="text-sm text-muted-foreground">{t('salesInPeriod')}</p>
               <p className="text-2xl font-bold">{filteredSales.length}</p>
             </div>
           </div>
@@ -37,8 +40,8 @@ export const SalesHistorySummaryCards: React.FC<SalesHistorySummaryCardsProps> =
               <ShoppingCart className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-bold">${getTotalRevenue()}</p>
+              <p className="text-sm text-muted-foreground">{t('totalRevenue')}</p>
+              <p className="text-2xl font-bold">{formatCurrency(getTotalRevenue(), currency)}</p>
             </div>
           </div>
         </CardContent>
@@ -51,7 +54,7 @@ export const SalesHistorySummaryCards: React.FC<SalesHistorySummaryCardsProps> =
               <Calendar className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Today</p>
+              <p className="text-sm text-muted-foreground">{t('today')}</p>
               <p className="text-2xl font-bold">
                 {
                   filteredSales.filter(s =>
